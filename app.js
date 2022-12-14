@@ -7,10 +7,7 @@ const app = express()
 const port = process.env.PORT ?? 5040
 
 app.use(express.json())
-
-app.get('/', (_req, res) => {
-    res.send('Hello World!')
-})
+app.use(express.static('public'))
 
 app.get('/install', (_req, res) => {
     res.send(db.migrate())
