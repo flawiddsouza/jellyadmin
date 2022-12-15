@@ -3,6 +3,7 @@ import * as db from './db.js'
 import * as connection from './connection.js'
 import { assert, object, number, string, type, enums, optional } from 'superstruct'
 import path from 'path'
+import { CONNECTION_TYPES } from './constants.js'
 
 const app = express()
 const port = process.env.PORT ?? 5040
@@ -39,7 +40,7 @@ apiRouter.post('/connection', (req, res) => {
     try {
         const newConnectionStruct = object({
             name: string(),
-            type: enums(['postgresql', 'mysql']),
+            type: enums([CONNECTION_TYPES.POSTGRESQL, CONNECTION_TYPES.MYSQL]),
             host: string(),
             port: number(),
             username: string(),
@@ -50,13 +51,13 @@ apiRouter.post('/connection', (req, res) => {
 
         assert(req.body, newConnectionStruct)
 
-        if(req.body.type === 'mysql') {
+        if(req.body.type === CONNECTION_TYPES.MYSQL) {
             assert(req.body, type({
                 schema: enums([null, undefined])
             }))
         }
 
-        if(req.body.type === 'postgresql') {
+        if(req.body.type === CONNECTION_TYPES.POSTGRESQL) {
             assert(req.body, type({
                 schema: string()
             }))
