@@ -77,7 +77,8 @@ const connections = ref([])
 const connection = ref({})
 
 async function getConnections() {
-    connections.value = await api.getConnections()
+    const { data } = await api.getConnections()
+    connections.value = data
 }
 
 async function addConnection() {

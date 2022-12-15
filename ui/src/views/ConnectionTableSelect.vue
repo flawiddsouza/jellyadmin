@@ -29,7 +29,7 @@ const route = useRoute()
 const columns = ref([])
 
 async function getConnectionTable() {
-    const table = await api.getConnectionTable(route.params.connectionId, route.params.tableName)
+    const { data: table } = await api.getConnectionTable(route.params.connectionId, route.params.tableName)
     columns.value = table.columns
 }
 

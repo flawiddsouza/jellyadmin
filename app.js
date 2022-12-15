@@ -1,7 +1,7 @@
 import express from 'express'
 import * as db from './db.js'
 import * as connection from './connection.js'
-import { assert, object, number, string, type, enums, optional, never } from 'superstruct'
+import { assert, object, number, string, type, enums, optional } from 'superstruct'
 import path from 'path'
 
 const app = express()
@@ -52,7 +52,7 @@ apiRouter.post('/connection', (req, res) => {
 
         if(req.body.type === 'mysql') {
             assert(req.body, type({
-                schema: never()
+                schema: enums([null, undefined])
             }))
         }
 
@@ -72,15 +72,32 @@ apiRouter.post('/connection', (req, res) => {
 })
 
 apiRouter.get('/connection/:connection_id', async(req, res) => {
+    let details = null
+
     try {
-        const details = db.getConnection(req.params.connection_id)
+        details = db.getConnection(req.params.connection_id)
+    } catch(e) {
+        res.status(400).send(e.message)
+        return
+    }
+
+    try {
         const tables = await connection.getTables(req.params.connection_id)
         res.send({
             details,
-            tables
+            tables: {
+                success: true,
+                data: tables
+            }
         })
     } catch(e) {
-        res.status(400).send(e.message)
+        res.send({
+            details,
+            tables: {
+                success: false,
+                data: e.message === 'write CONNECT_TIMEOUT undefined:undefined' ? 'Unable to establish connection with database' : e.message
+            }
+        })
     }
 })
 

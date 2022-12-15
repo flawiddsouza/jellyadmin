@@ -1,7 +1,16 @@
 async function get(url) {
     const response = await fetch(url)
-    const json = await response.json()
-    return json
+    if(response.status !== 400) {
+        return {
+            success: true,
+            data: await response.json()
+        }
+    } else {
+        return {
+            success: false,
+            data: await response.text()
+        }
+    }
 }
 
 async function post(url, body) {
@@ -14,10 +23,9 @@ async function post(url, body) {
     })
 
     if(response.status !== 400) {
-        const json = await response.json()
         return {
             success: true,
-            data: json
+            data: await response.json()
         }
     } else {
         return {
@@ -32,6 +40,9 @@ export async function getConnections() {
 }
 
 export async function addConnection(connection) {
+    if(connection.type !== 'postgresql') {
+        delete connection.schema
+    }
     return post('/api/connection', connection)
 }
 
