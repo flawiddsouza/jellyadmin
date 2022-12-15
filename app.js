@@ -114,10 +114,8 @@ apiRouter.delete('/connection/:connection_id', async(req, res) => {
 
 apiRouter.get('/connection/:connection_id/:table_name', async(req, res) => {
     try {
-        const columns = await connection.getColumns(req.params.connection_id, req.params.table_name)
-        res.send({
-            columns
-        })
+        const tableDetails = await connection.getTableDetails(req.params.connection_id, req.params.table_name)
+        res.send(tableDetails)
     } catch(e) {
         res.status(400).send(e.message)
     }

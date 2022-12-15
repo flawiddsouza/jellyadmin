@@ -1,5 +1,5 @@
 <template>
-    <h3>Query</h3>
+    <h2>Query</h2>
 
     <div class="message success mb-2" v-if="queryRan">
         <template v-if="rows.length === 0">No rows</template>
@@ -46,9 +46,11 @@ async function runQuery() {
     rowHeaders.value = []
     error.value = ''
 
-    addQueryParamsToRoute(route, {
-        sql: query.value
-    })
+    if(route.query.sql !== query.value) {
+        addQueryParamsToRoute(route, {
+            sql: query.value
+        })
+    }
 
     const { success, data } = await api.runQuery(route.params.connectionId, query.value)
 
