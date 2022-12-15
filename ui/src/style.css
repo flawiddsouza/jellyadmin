@@ -48,6 +48,10 @@ main {
     margin-left: 1rem;
 }
 
+.mb-2 {
+    margin-bottom: 1rem;
+}
+
 .full-width {
     width: 100%;
 }
@@ -118,4 +122,18 @@ h3 {
     color: #000;
     font-weight: 400;
     background: #ddf;
+}
+
+.message {
+    padding: 0.5rem 0.8rem;
+}
+
+.message.success {
+    color: green;
+    background: #efe;
+}
+
+.message.error {
+    color: red;
+    background: #fee;
 }

@@ -12,8 +12,19 @@ async function post(url, body) {
         },
         body: JSON.stringify(body)
     })
-    const json = await response.json()
-    return json
+
+    if(response.status !== 400) {
+        const json = await response.json()
+        return {
+            success: true,
+            data: json
+        }
+    } else {
+        return {
+            success: false,
+            data: await response.text()
+        }
+    }
 }
 
 export async function getConnections() {
@@ -30,4 +41,8 @@ export async function getConnection(connectionId) {
 
 export async function getConnectionTable(connectionId, tableName) {
     return get(`/api/connection/${connectionId}/${tableName}`)
+}
+
+export async function runQuery(connectionId, query) {
+    return post(`/api/connection/${connectionId}/query`, { query })
 }

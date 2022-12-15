@@ -1,7 +1,10 @@
 <template>
     <div style="display: grid; grid-template-columns: 300px 1fr; overflow: auto; height: 100%; white-space: nowrap;">
         <aside style="overflow: auto">
-            <ul style="list-style: none; margin-left: 0;">
+            <div>
+                <router-link :to="`/${route.params.connectionId}/query`">Query</router-link>
+            </div>
+            <ul style="list-style: none; margin-left: 0;" class="mt-1">
                 <li v-for="table in tables">
                     <router-link :to="`/${route.params.connectionId}/${table.table_name}/select`">select</router-link>&nbsp;<router-link :to="`/${route.params.connectionId}/${table.table_name}/structure`">{{ table.table_name }}</router-link>
                 </li>
