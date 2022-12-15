@@ -2,6 +2,7 @@ import express from 'express'
 import * as db from './db.js'
 import * as connection from './connection.js'
 import { assert, object, number, string, type, enums, optional, never } from 'superstruct'
+import path from 'path'
 
 const app = express()
 const port = process.env.PORT ?? 5040
@@ -9,11 +10,22 @@ const port = process.env.PORT ?? 5040
 app.use(express.json())
 app.use(express.static('public'))
 
-app.get('/install', (_req, res) => {
+// URL rewriting for vue router web history mode
+app.use((req, res, next) => {
+    if(req.method === 'GET' && req.url.startsWith('/api') === false) {
+        res.sendFile(path.resolve('./public/index.html'))
+        return
+    }
+    next()
+})
+
+const apiRouter = express.Router()
+
+apiRouter.get('/install', (_req, res) => {
     res.send(db.migrate())
 })
 
-app.get('/connections', (_req, res) => {
+apiRouter.get('/connections', (_req, res) => {
     try {
         const connections = db.getConnections()
         res.send(connections)
@@ -23,7 +35,7 @@ app.get('/connections', (_req, res) => {
     }
 })
 
-app.post('/connection', (req, res) => {
+apiRouter.post('/connection', (req, res) => {
     try {
         const newConnectionStruct = object({
             name: string(),
@@ -59,12 +71,20 @@ app.post('/connection', (req, res) => {
     }
 })
 
-app.get('/connection/:connection_id', async(req, res) => {
-    const tables = await connection.getTables(req.params.connection_id)
-    res.send(tables)
+apiRouter.get('/connection/:connection_id', async(req, res) => {
+    try {
+        const details = db.getConnection(req.params.connection_id)
+        const tables = await connection.getTables(req.params.connection_id)
+        res.send({
+            details,
+            tables
+        })
+    } catch(e) {
+        res.status(400).send(e.message)
+    }
 })
 
-app.delete('/connection/:connection_id', async(req, res) => {
+apiRouter.delete('/connection/:connection_id', async(req, res) => {
     try {
         db.deleteConnection(req.params.connection_id)
         res.send('Connection deleted')
@@ -74,15 +94,27 @@ app.delete('/connection/:connection_id', async(req, res) => {
     }
 })
 
-app.get('/connection/:connection_id/:table_name', async(req, res) => {
-    const columns = await connection.getColumns(req.params.connection_id, req.params.table_name)
-    res.send(columns)
+apiRouter.get('/connection/:connection_id/:table_name', async(req, res) => {
+    try {
+        const columns = await connection.getColumns(req.params.connection_id, req.params.table_name)
+        res.send({
+            columns
+        })
+    } catch(e) {
+        res.status(400).send(e.message)
+    }
 })
 
-app.post('/connection/:connection_id/query', async(req, res) => {
-    const result = await connection.runQuery(req.params.connection_id, req.body.query)
-    res.send(result)
+apiRouter.post('/connection/:connection_id/query', async(req, res) => {
+    try {
+        const result = await connection.runQuery(req.params.connection_id, req.body.query)
+        res.send(result)
+    } catch(e) {
+        res.status(400).send(e.message)
+    }
 })
+
+app.use('/api', apiRouter)
 
 app.listen(port, () => {
     console.log(`App listening on port http://localhost:${port}`)

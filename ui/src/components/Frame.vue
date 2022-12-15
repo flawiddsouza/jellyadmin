@@ -1,14 +1,28 @@
 <template>
-    <h3>{{ heading }}</h3>
-    <p>
-        <router-link to="/">Home</router-link>
-        <router-link to="/page2" style="margin-left: 1rem">Page 2</router-link>
-    </p>
-    <router-view></router-view>
+    <nav>
+        <router-link to="/" @click="currentConnection = null">Jelly Database</router-link>
+        <span v-if="currentConnection"> » <router-link :to="`/${currentConnection.id}`">{{ currentConnection.name }}</router-link> » Database: {{ currentConnection.database }}</span>
+        <span v-if="$route.params.tableName"> » {{ getIfSelectOrTable($route) }}: {{ $route.params.tableName }}</span>
+    </nav>
+    <main>
+        <router-view></router-view>
+    </main>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { useStore } from '../store'
+import { storeToRefs } from 'pinia'
 
-const heading = ref('This is the frame component')
+const store = useStore()
+const { currentConnection } = storeToRefs(store)
+
+function getIfSelectOrTable(route) {
+    if(route.path.endsWith(`${route.params.tableName}/select`)) {
+        return 'Select'
+    }
+
+    if(route.path.endsWith(`${route.params.tableName}/structure`)) {
+        return 'Table'
+    }
+}
 </script>

@@ -4,11 +4,12 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "vite",
+        "dev": "vite build --outDir=../public --emptyOutDir --watch",
         "build": "vite build --outDir=../public --emptyOutDir",
         "preview": "vite preview"
     },
     "dependencies": {
+        "pinia": "^2.0.28",
         "vue": "^3.2.45",
         "vue-router": "^4.1.6"
     },
