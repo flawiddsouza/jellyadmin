@@ -225,7 +225,19 @@ function generateQuery() {
             column = `"${column}"`
         }
 
-        queryParts.push(`${column} ${querySearchItem.operator} ${querySearchItem.value}`)
+        let value = querySearchItem.value
+
+        if(value) {
+            if(currentConnection.value.type === 'mysql') {
+                value = `'${value}'`
+            }
+
+            if(currentConnection.value.type === 'postgresql') {
+                value = `'${value}'`
+            }
+        }
+
+        queryParts.push(`${column} ${querySearchItem.operator} ${value}`)
     })
 
     const querySortTemp = querySort.value.filter(querySortItem => querySortItem.column.trim())
