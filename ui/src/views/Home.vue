@@ -70,7 +70,7 @@
 
 <script setup>
 import { onBeforeMount, ref } from 'vue'
-import * as api from '../api.js'
+import * as api from '../libs/api.js'
 import NumberInput from '../components/NumberInput.vue'
 
 const connections = ref([])

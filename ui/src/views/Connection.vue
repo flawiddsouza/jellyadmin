@@ -27,7 +27,7 @@ import { onBeforeMount, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from '../store'
 import { storeToRefs } from 'pinia'
-import * as api from '../api.js'
+import * as api from '../libs/api.js'
 
 const route = useRoute()
 const store = useStore()

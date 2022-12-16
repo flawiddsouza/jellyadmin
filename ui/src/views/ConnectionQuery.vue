@@ -31,8 +31,8 @@
 <script setup>
 import { onBeforeMount, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import * as api from '../api.js'
-import { addQueryParamsToRoute } from '../helpers.js'
+import * as api from '../libs/api.js'
+import { addQueryParamsToRoute } from '../libs/helpers.js'
 
 const route = useRoute()
 const query = ref('')
