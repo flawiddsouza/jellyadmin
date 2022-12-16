@@ -3,6 +3,23 @@
     <ul class="mt-1">
         <li v-for="connection in connections">
             <router-link :to="`/${connection.id}`">{{ connection.name }}</router-link>
+            <button class="no-border no-padding no-background cursor-pointer vertical-align-middle ml-1" @click="cloneConnection(connection)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <rect x="8" y="8" width="12" height="12" rx="2"></rect>
+                        <path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2"></path>
+                    </svg>
+            </button>
+            <button class="no-border no-padding no-background cursor-pointer vertical-align-middle" @click="confirmDelete(connection)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <line x1="4" y1="7" x2="20" y2="7"></line>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                    <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
+                    <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
+                </svg>
+            </button>
         </li>
     </ul>
     <div class="mt-2 bold">Add New Connection</div>
@@ -12,13 +29,13 @@
                 <tr>
                     <th>Name</th>
                     <td>
-                        <input type="text" class="full-width" required v-model="connection.name">
+                        <input type="text" class="full-width" required v-model="newConnection.name">
                     </td>
                 </tr>
                 <tr>
                     <th>Type</th>
                     <td>
-                        <select class="full-width" required v-model="connection.type">
+                        <select class="full-width" required v-model="newConnection.type">
                             <option value="postgresql">PostgreSQL</option>
                             <option value="mysql">MySQL</option>
                         </select>
@@ -27,43 +44,44 @@
                 <tr>
                     <th>Host</th>
                     <td>
-                        <input type="text" class="full-width" required v-model="connection.host">
+                        <input type="text" class="full-width" required v-model="newConnection.host">
                     </td>
                 </tr>
                 <tr>
                     <th>Port</th>
                     <td>
-                        <NumberInput class="full-width" required v-model.number="connection.port" />
+                        <NumberInput class="full-width" required v-model.number="newConnection.port" />
                     </td>
                 </tr>
                 <tr>
                     <th>Username</th>
                     <td>
-                        <input type="text" class="full-width" required v-model="connection.username">
+                        <input type="text" class="full-width" required v-model="newConnection.username">
                     </td>
                 </tr>
                 <tr>
                     <th>Password</th>
                     <td>
-                        <input type="text" class="full-width" required v-model="connection.password">
+                        <input type="text" class="full-width" required v-model="newConnection.password">
                     </td>
                 </tr>
                 <tr>
                     <th>Database</th>
                     <td>
-                        <input type="text" class="full-width" required v-model="connection.database">
+                        <input type="text" class="full-width" required v-model="newConnection.database">
                     </td>
                 </tr>
-                <tr v-if="connection.type === 'postgresql'">
+                <tr v-if="newConnection.type === 'postgresql'">
                     <th>Schema</th>
                     <td>
-                        <input type="text" class="full-width" required v-model="connection.schema">
+                        <input type="text" class="full-width" required v-model="newConnection.schema">
                     </td>
                 </tr>
             </tbody>
         </table>
         <div class="mt-2">
             <button>Add Connection</button>
+            <button type="button" class="ml-1" @click="newConnection = {}">Clear</button>
         </div>
     </form>
 </template>
@@ -74,7 +92,7 @@ import * as api from '../libs/api.js'
 import NumberInput from '../components/NumberInput.vue'
 
 const connections = ref([])
-const connection = ref({})
+const newConnection = ref({})
 
 async function getConnections() {
     const { data } = await api.getConnections()
@@ -82,9 +100,24 @@ async function getConnections() {
 }
 
 async function addConnection() {
-    await api.addConnection(connection.value)
-    connection.value = {}
+    await api.addConnection(newConnection.value)
+    newConnection.value = {}
     await getConnections()
+}
+
+function cloneConnection(connection) {
+    const connectionCopy = JSON.parse(JSON.stringify(connection))
+    delete connectionCopy.id
+    delete connectionCopy.created_at
+    delete connectionCopy.updated_at
+    newConnection.value = connectionCopy
+}
+
+async function confirmDelete(connection) {
+    if(confirm(`Are you sure you want to delete ${connection.name}?`)) {
+        await api.deleteConnection(connection.id)
+        await getConnections()
+    }
 }
 
 onBeforeMount(() => {

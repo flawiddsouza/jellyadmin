@@ -105,7 +105,9 @@ apiRouter.get('/connection/:connection_id', async(req, res) => {
 apiRouter.delete('/connection/:connection_id', async(req, res) => {
     try {
         db.deleteConnection(req.params.connection_id)
-        res.send('Connection deleted')
+        res.send({
+            data: 'Connection deleted'
+        })
     } catch(e) {
         console.error(e)
         res.send(e.message)
