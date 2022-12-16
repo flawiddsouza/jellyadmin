@@ -215,7 +215,17 @@ function generateQuery() {
             queryParts.push('AND')
         }
 
-        queryParts.push(`${querySearchItem.column} ${querySearchItem.operator} ${querySearchItem.value}`)
+        let column = querySearchItem.column
+
+        if(currentConnection.value.type === 'mysql') {
+            column = `\`${column}\``
+        }
+
+        if(currentConnection.value.type === 'postgresql') {
+            column = `"${column}"`
+        }
+
+        queryParts.push(`${column} ${querySearchItem.operator} ${querySearchItem.value}`)
     })
 
     const querySortTemp = querySort.value.filter(querySortItem => querySortItem.column.trim())
@@ -227,7 +237,17 @@ function generateQuery() {
             queryParts.push(',')
         }
 
-        queryParts.push(`${querySortItem.column}${querySortItem.descending ? ' DESC' : ''}`)
+        let column = querySortItem.column
+
+        if(currentConnection.value.type === 'mysql') {
+            column = `\`${column}\``
+        }
+
+        if(currentConnection.value.type === 'postgresql') {
+            column = `"${column}"`
+        }
+
+        queryParts.push(`${column}${querySortItem.descending ? ' DESC' : ''}`)
     })
 
     queryParts.push(`LIMIT ${queryLimit.value}`)
