@@ -21,6 +21,7 @@ a.router-link-exact-active {
 }
 
 .sql-hl-keyword {
+    font-weight: bold;
     color: navy;
 }
 
