@@ -15,3 +15,15 @@ a.router-link-exact-active {
     color: red;
     background: #fee;
 }
+
+.sql-hl-string {
+    color: red;
+}
+
+.sql-hl-keyword {
+    color: navy;
+}
+
+.sql-hl-number {
+    color: #007F7F;
+}
