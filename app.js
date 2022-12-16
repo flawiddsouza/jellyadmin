@@ -22,9 +22,7 @@ app.use((req, res, next) => {
 
 const apiRouter = express.Router()
 
-apiRouter.get('/install', (_req, res) => {
-    res.send(db.migrate())
-})
+console.log(db.migrate())
 
 apiRouter.get('/connections', (_req, res) => {
     try {
