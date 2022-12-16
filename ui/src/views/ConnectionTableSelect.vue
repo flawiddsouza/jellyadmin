@@ -6,7 +6,7 @@
         <router-link :to="`/${route.params.connectionId}/${route.params.tableName}/structure`" class="ml-2">Show structure</router-link>
     </div>
 
-    <form @submit.prevent="runQuery()" class="mt-1">
+    <form @submit.prevent="runQuery(true)" class="mt-1">
         <fieldset>
             <legend><a href="#fieldset-select">Select</a></legend>
             <div>
@@ -135,6 +135,7 @@ import { useStore } from '../store.js'
 import { storeToRefs } from 'pinia'
 import * as api from '../libs/api.js'
 import { highlight } from 'sql-highlight'
+import { addQueryParamsToRoute } from '../libs/helpers.js'
 
 const route = useRoute()
 const store = useStore()
@@ -252,12 +253,23 @@ function generateQuery() {
     return queryParts.join(' ')
 }
 
-async function runQuery() {
+async function runQuery(manual=true) {
     generatedQuery.value = generateQuery()
 
     rows.value = []
     rowHeaders.value = []
     error.value = ''
+
+    if(manual) {
+        addQueryParamsToRoute(route, {
+            filters: btoa(JSON.stringify({
+                select: querySelect.value,
+                search: querySearch.value,
+                sort: querySort.value,
+                limit: queryLimit.value
+            }))
+        })
+    }
 
     const { success, data } = await api.runQuery(route.params.connectionId, generatedQuery.value)
 
@@ -310,6 +322,15 @@ function handleQuerySortItemChange(querySortItemIndex) {
 
 onBeforeMount(() => {
     getConnectionTable()
-    runQuery()
+    if(route.query.filters) {
+        try {
+            const parsedFilters = JSON.parse(atob(route.query.filters))
+            querySelect.value = parsedFilters.select
+            querySearch.value = parsedFilters.search
+            querySort.value = parsedFilters.sort
+            queryLimit.value = parsedFilters.limit
+        } catch {}
+    }
+    runQuery(false)
 })
 </script>
