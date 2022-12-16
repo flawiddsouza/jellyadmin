@@ -1,6 +1,10 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import './style.css'
+import './styles/variables.css'
+import './styles/functional.css'
+import './styles/base-elements.css'
+import './styles/ids.css'
+import './styles/classes.css'
 import App from './App.vue'
 import { router } from './router.js'
 

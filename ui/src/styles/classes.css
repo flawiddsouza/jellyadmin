@@ -1,0 +1,17 @@
+a.router-link-exact-active {
+    font-weight: bold;
+}
+
+.message {
+    padding: 0.5rem 0.8rem;
+}
+
+.message.success {
+    color: green;
+    background: #efe;
+}
+
+.message.error {
+    color: red;
+    background: #fee;
+}
