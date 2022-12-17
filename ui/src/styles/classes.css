@@ -33,3 +33,40 @@ table.sticky thead th {
     position: sticky;
     top: 0;
 }
+
+table.sticky {
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+}
+
+table.sticky thead th, table.sticky tbody tr:last-child th {
+    border-top: 0;
+    border-bottom: 0;
+}
+
+table.sticky tbody tr:first-child td {
+    border-top: 0;
+}
+
+table.sticky tbody tr:nth-last-child(2) td {
+    border-bottom: 0;
+}
+
+table.sticky thead th:after, table.sticky tbody th:after {
+    content:'';
+    position: absolute;
+    width: 100%;
+    pointer-events: none;
+}
+
+table.sticky thead th:after, table.sticky tbody th:after {
+    left: 0;
+    top: 0;
+    border-top: 1px solid var(--border-color);
+}
+
+table.sticky thead th:after, table.sticky tbody th:after {
+    left: 0;
+    bottom: 0;
+    border-bottom: 1px solid var(--border-color);
+}
