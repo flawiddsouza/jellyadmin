@@ -108,7 +108,7 @@
     <div class="message error mt-2" v-if="error">{{ error }}</div>
 
     <template v-if="queryRan">
-        <div class="mt-2 message success" v-if="rows.length > 0">{{ rows.length }} {{ rows.length > 1 ? 'rows' : 'row' }} returned</div>
+        <div class="mt-2 message success" v-if="rows.length > 0">{{ new Intl.NumberFormat().format(rows.length) }} {{ rows.length > 1 ? 'rows' : 'row' }} returned</div>
         <table class="mt-2 sticky" v-if="rows.length > 0">
             <thead>
                 <tr>

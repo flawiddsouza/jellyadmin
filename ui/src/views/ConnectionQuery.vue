@@ -3,7 +3,7 @@
 
     <div class="message success mb-2" v-if="queryRan">
         <template v-if="rows.length === 0">No rows</template>
-        <template v-else>{{ rows.length }} {{ rows.length > 1 ? 'rows' : 'row' }} returned</template>
+        <template v-else>{{ new Intl.NumberFormat().format(rows.length) }} {{ rows.length > 1 ? 'rows' : 'row' }} returned</template>
     </div>
 
     <div class="message error mb-2" v-if="error">{{ error }}</div>
