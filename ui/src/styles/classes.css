@@ -28,3 +28,8 @@ a.router-link-exact-active {
 .sql-hl-number {
     color: #007F7F;
 }
+
+table.sticky thead th {
+    position: sticky;
+    top: 0;
+}

@@ -108,7 +108,8 @@
     <div class="message error mt-2" v-if="error">{{ error }}</div>
 
     <template v-if="queryRan">
-        <table class="mt-2" v-if="rows.length > 0">
+        <div class="mt-2 message success" v-if="rows.length > 0">{{ rows.length }} {{ rows.length > 1 ? 'rows' : 'row' }} returned</div>
+        <table class="mt-2 sticky" v-if="rows.length > 0">
             <thead>
                 <tr>
                     <th v-for="rowHeader in rowHeaders">{{ rowHeader }}</th>
@@ -116,16 +117,15 @@
             </thead>
             <tbody>
                 <tr v-for="row in rows">
-                    <td v-for="rowHeader in rowHeaders">{{ row[rowHeader] }}</td>
+                    <td v-for="rowHeader in rowHeaders">
+                        <template v-if="row[rowHeader].type === 'text'">{{ row[rowHeader].text }}</template>
+                        <router-link :to="row[rowHeader].to" v-if="row[rowHeader].type === 'router-link'">{{ row[rowHeader].text }}</router-link>
+                    </td>
                 </tr>
             </tbody>
         </table>
         <div class="mt-2 message success" v-else>No rows</div>
     </template>
-
-    <div class="mt-1" v-if="rows.length > 0">
-        {{ rows.length }} {{ rows.length > 1 ? 'rows' : 'row' }}
-    </div>
 </template>
 
 <script setup>
@@ -141,6 +141,7 @@ const route = useRoute()
 const store = useStore()
 const { currentConnection } = storeToRefs(store)
 const columns = ref([])
+const foreignKeys = ref([])
 const rowHeaders = ref([])
 const rows = ref([])
 const error = ref('')
@@ -169,6 +170,7 @@ const queryLimit = ref('50')
 async function getConnectionTable() {
     const { data: table } = await api.getConnectionTable(route.params.connectionId, route.params.tableName)
     columns.value = table.columns
+    foreignKeys.value = table.foreignKeys
 }
 
 function generateQuery() {
@@ -262,7 +264,9 @@ function generateQuery() {
         queryParts.push(`${column}${querySortItem.descending ? ' DESC' : ''}`)
     })
 
-    queryParts.push(`LIMIT ${queryLimit.value}`)
+    if(queryLimit.value !== '') {
+        queryParts.push(`LIMIT ${queryLimit.value}`)
+    }
 
     querySelect.value = querySelectTemp
     querySelect.value.push({
@@ -288,6 +292,7 @@ function generateQuery() {
 async function runQuery(manual=true) {
     generatedQuery.value = generateQuery()
 
+    queryRan.value = false
     rows.value = []
     rowHeaders.value = []
     error.value = ''
@@ -308,6 +313,43 @@ async function runQuery(manual=true) {
     if(success) {
         rows.value = data
         rowHeaders.value = rows.value.length > 0 ? Object.keys(rows.value[0]) : []
+
+        const foreignKeyMap = foreignKeys.value.reduce((prev, curr) => {
+            prev[curr.column] = curr
+            return prev
+        }, {})
+
+        rows.value.forEach(row => {
+            columns.value.forEach(column => {
+                if(column.name in foreignKeyMap === false) {
+                    row[column.name] = {
+                        type: 'text',
+                        text: row[column.name]
+                    }
+                } else {
+                    const filters = {
+                        search: [
+                            {
+                                column: foreignKeyMap[column.name].foreign_column,
+                                operator: '=',
+                                value: row[column.name]
+                            },
+                            {
+                                column: '',
+                                operator: '=',
+                                value: ''
+                            }
+                        ]
+                    }
+                    row[column.name] = {
+                        type: 'router-link',
+                        to: `/${route.params.connectionId}/${foreignKeyMap[column.name].foreign_table}/select?filters=${btoa(JSON.stringify(filters))}`,
+                        text: row[column.name]
+                    }
+                }
+            })
+        })
+
         queryRan.value = true
     } else {
         error.value = data
@@ -352,17 +394,29 @@ function handleQuerySortItemChange(querySortItemIndex) {
     }
 }
 
-onBeforeMount(() => {
-    getConnectionTable()
+onBeforeMount(async() => {
+    await getConnectionTable()
     if(route.query.filters) {
         try {
             const parsedFilters = JSON.parse(atob(route.query.filters))
-            querySelect.value = parsedFilters.select
-            querySearch.value = parsedFilters.search
-            querySort.value = parsedFilters.sort
-            queryLimit.value = parsedFilters.limit
+
+            if(parsedFilters.select) {
+                querySelect.value = parsedFilters.select
+            }
+
+            if(parsedFilters.search) {
+                querySearch.value = parsedFilters.search
+            }
+
+            if(parsedFilters.sort) {
+                querySort.value = parsedFilters.sort
+            }
+
+            if(parsedFilters.limit !== undefined) {
+                queryLimit.value = parsedFilters.limit
+            }
         } catch {}
     }
-    runQuery(false)
+    await runQuery(false)
 })
 </script>
