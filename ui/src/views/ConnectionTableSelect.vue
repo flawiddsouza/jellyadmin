@@ -109,7 +109,7 @@
 
     <template v-if="queryRan">
         <div class="mt-2 message success" v-if="rows.length > 0">{{ new Intl.NumberFormat().format(rows.length) }} {{ rows.length > 1 ? 'rows' : 'row' }} returned</div>
-        <table class="mt-2 sticky" v-if="rows.length > 0">
+        <table class="mt-2 sticky hover" v-if="rows.length > 0">
             <thead>
                 <tr>
                     <th v-for="rowHeader in rowHeaders">{{ rowHeader }}</th>

@@ -70,3 +70,7 @@ table.sticky thead th:after, table.sticky tbody th:after {
     bottom: 0;
     border-bottom: 1px solid var(--border-color);
 }
+
+table.hover tbody > tr:hover {
+    background: #eee;
+}
