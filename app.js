@@ -9,12 +9,12 @@ const app = express()
 const port = process.env.PORT ?? 5040
 
 app.use(express.json())
-app.use(express.static('public'))
+app.use(express.static(path.join(path.dirname(process.argv[1]), 'public')))
 
 // URL rewriting for vue router web history mode
 app.use((req, res, next) => {
     if(req.method === 'GET' && req.url.startsWith('/api') === false) {
-        res.sendFile(path.resolve('./public/index.html'))
+        res.sendFile(path.join(path.dirname(process.argv[1]), 'public', 'index.html'))
         return
     }
     next()

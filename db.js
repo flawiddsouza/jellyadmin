@@ -1,6 +1,7 @@
 import SQLite3 from 'better-sqlite3'
+import path from 'path'
 
-const db = new SQLite3('store.db')
+const db = new SQLite3(path.resolve('store.db'))
 
 db.pragma('journal_mode = WAL')
 

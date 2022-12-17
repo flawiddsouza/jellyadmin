@@ -12,6 +12,20 @@
         "start": "node app.js",
         "dev-api": "npx nodemon app.jsn --ignore ./public/",
         "dev-ui": "cd ui && npm run dev",
-        "dev": "npx concurrently npm:dev-api npm:dev-ui"
+        "dev": "npx concurrently npm:dev-api npm:dev-ui",
+        "generate-bundle": "npx rollup app.js -f cjs -o bundle.js",
+        "build-linux": "rm -rf out && npm run generate-bundle && npx pkg bundle.js --config package.json -o out/jelly-database-linux && rm bundle.js"
+    },
+    "devDependencies": {
+        "rollup": "^3.7.5"
+    },
+    "pkg": {
+        "assets": [
+            "public/**/*",
+            "node_modules/better-sqlite3/**"
+        ],
+        "targets": [
+            "node18-linux-linux"
+        ]
     }
 }
