@@ -34,18 +34,20 @@ apiRouter.get('/connections', (_req, res) => {
     }
 })
 
+const connectionStruct = {
+    name: string(),
+    type: enums([CONNECTION_TYPES.POSTGRESQL, CONNECTION_TYPES.MYSQL]),
+    host: string(),
+    port: number(),
+    username: string(),
+    password: string(),
+    database: string(),
+    schema: optional(string())
+}
+
 apiRouter.post('/connection', (req, res) => {
     try {
-        const newConnectionStruct = object({
-            name: string(),
-            type: enums([CONNECTION_TYPES.POSTGRESQL, CONNECTION_TYPES.MYSQL]),
-            host: string(),
-            port: number(),
-            username: string(),
-            password: string(),
-            database: string(),
-            schema: optional(string())
-        })
+        const newConnectionStruct = object(connectionStruct)
 
         assert(req.body, newConnectionStruct)
 
@@ -61,7 +63,16 @@ apiRouter.post('/connection', (req, res) => {
             }))
         }
 
-        const createdConnection = db.addConnection(req.body.name, req.body.type, req.body.host, req.body.port, req.body.username, req.body.password, req.body.database, req.body.schema)
+        const createdConnection = db.addConnection(
+            req.body.name,
+            req.body.type,
+            req.body.host,
+            req.body.port,
+            req.body.username,
+            req.body.password,
+            req.body.database,
+            req.body.schema
+        )
 
         res.status(201).send(createdConnection)
     } catch(e) {
@@ -97,6 +108,46 @@ apiRouter.get('/connection/:connection_id', async(req, res) => {
                 data: e.message === 'write CONNECT_TIMEOUT undefined:undefined' ? 'Unable to establish connection with database' : e.message
             }
         })
+    }
+})
+
+apiRouter.put('/connection/:connection_id', async(req, res) => {
+    try {
+        const newConnectionStruct = object({
+            ...connectionStruct,
+            updated_at: string()
+        })
+
+        assert(req.body, newConnectionStruct)
+
+        if(req.body.type === CONNECTION_TYPES.MYSQL) {
+            assert(req.body, type({
+                schema: enums([null, undefined])
+            }))
+        }
+
+        if(req.body.type === CONNECTION_TYPES.POSTGRESQL) {
+            assert(req.body, type({
+                schema: string()
+            }))
+        }
+
+        const updatedConnection = db.updateConnection(
+            req.params.connection_id,
+            req.body.name,
+            req.body.type,
+            req.body.host,
+            req.body.port,
+            req.body.username,
+            req.body.password,
+            req.body.database,
+            req.body.schema
+        )
+
+        res.status(200).send(updatedConnection)
+    } catch(e) {
+        console.error(e)
+        res.send(e.message)
     }
 })
 

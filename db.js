@@ -51,6 +51,11 @@ export function getConnection(connectionId) {
     return connection
 }
 
+export function updateConnection(connectionId, name, type, host, port, username, password, database, schema) {
+    db.prepare('UPDATE connections SET name=?, type=?, host=?, port=?, username=?, password=?, database=?, schema=?, updated_at=CURRENT_TIMESTAMP WHERE id = ?').run(name, type, host, port, username, password, database, schema, connectionId)
+    return getConnection(connectionId)
+}
+
 export function deleteConnection(connectionId) {
     const connection = db.prepare('SELECT * FROM connections WHERE id = ?').get(connectionId)
     if(!connection) {
