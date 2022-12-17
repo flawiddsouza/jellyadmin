@@ -53,10 +53,6 @@ table :where(th, td) {
     padding: .2em .3em;
 }
 
-table tbody td {
-    white-space: pre;
-}
-
 nav {
     border-bottom: 1px solid var(--border-color);
     padding: 0.5rem;

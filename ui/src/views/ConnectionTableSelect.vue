@@ -117,9 +117,18 @@
             </thead>
             <tbody>
                 <tr v-for="row in rows">
-                    <td v-for="rowHeader in rowHeaders">
-                        <template v-if="row[rowHeader].type === 'text'">{{ row[rowHeader].text }}</template>
+                    <td v-for="rowHeader in rowHeaders" :class="{ 'white-space-pre': row[rowHeader].type === 'text' && row[rowHeader].text.length > 100 }">
+                        <template v-if="row[rowHeader].type === 'text'">
+                            <div class="flex flex-jc-sb">
+                                <div>{{ row[rowHeader].text }}</div>
+                                <div class="ml-1">
+                                    <button v-if="row[rowHeader].text.length === 100 && row[rowHeader].originalText.length > 100" @click="row[rowHeader].text = row[rowHeader].originalText">Expand</button>
+                                    <button v-if="row[rowHeader].text.length > 100"  @click="row[rowHeader].text = row[rowHeader].originalText.slice(0, 100)">Collapse</button>
+                                </div>
+                            </div>
+                        </template>
                         <router-link :to="row[rowHeader].to" v-if="row[rowHeader].type === 'router-link'">{{ row[rowHeader].text }}</router-link>
+                        <span v-if="row[rowHeader].type === 'null'" class="italic">NULL</span>
                     </td>
                 </tr>
             </tbody>
@@ -321,10 +330,19 @@ async function runQuery(manual=true) {
 
         rows.value.forEach(row => {
             columns.value.forEach(column => {
+                if(row[column.name] === null) {
+                    row[column.name] = {
+                        type: 'null'
+                    }
+                    return
+                }
+
                 if(column.name in foreignKeyMap === false) {
+                    const text = typeof row[column.name] === 'string' ? row[column.name] : JSON.stringify(row[column.name], null, 4)
                     row[column.name] = {
                         type: 'text',
-                        text: row[column.name]
+                        text: text.slice(0, 100),
+                        originalText: text
                     }
                 } else {
                     const filters = {

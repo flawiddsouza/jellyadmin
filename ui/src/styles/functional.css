@@ -49,3 +49,15 @@
 .vertical-align-middle {
     vertical-align: middle;
 }
+
+.white-space-pre {
+    white-space: pre;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-jc-sb {
+    justify-content: space-between;
+}
