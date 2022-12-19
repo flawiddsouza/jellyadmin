@@ -432,10 +432,6 @@ async function updateRowColumn(row, column, value) {
 
     row[column].edit = false
 
-    if(currentConnection.value.type === 'postgresql') {
-        return
-    }
-
     if(row[column].type === 'text') {
         row[column]['originalText'] = value
         row[column]['text'] = value.slice(0, 100)
@@ -460,7 +456,16 @@ async function updateRowColumn(row, column, value) {
             columnName = `"${columnName}"`
         }
 
-        const primaryColumnRaw = indexes.value.find(index => index.type === 'PRIMARY').column
+        let primaryColumnRaw = indexes.value.find(index => index.type === 'PRIMARY').column
+
+        if(currentConnection.value.type === 'postgresql') {
+            const regex = /\((.*)\)/
+            const matches = regex.exec(primaryColumnRaw)
+            if(matches.length === 2) {
+                primaryColumnRaw = matches[1]
+            }
+        }
+
         let primaryColumn = primaryColumnRaw
 
         if(currentConnection.value.type === 'mysql') {
@@ -471,9 +476,27 @@ async function updateRowColumn(row, column, value) {
             primaryColumn = `"${primaryColumn}"`
         }
 
-        const valueToUpdate = JSON.stringify(value).slice(1, -1)
+        let valueToUpdate = JSON.stringify(value).slice(1, -1)
 
-        await api.runQuery(route.params.connectionId, `UPDATE ${tableName} SET ${columnName} = "${valueToUpdate}" WHERE ${primaryColumn} = "${row[primaryColumnRaw].text}"`)
+        if(currentConnection.value.type === 'mysql') {
+            valueToUpdate = `'${valueToUpdate}'`
+        }
+
+        if(currentConnection.value.type === 'postgresql') {
+            valueToUpdate = `'${valueToUpdate}'`
+        }
+
+        let primaryColumnValue = row[primaryColumnRaw].text
+
+        if(currentConnection.value.type === 'mysql') {
+            primaryColumnValue = `'${primaryColumnValue}'`
+        }
+
+        if(currentConnection.value.type === 'postgresql') {
+            primaryColumnValue = `'${primaryColumnValue}'`
+        }
+
+        await api.runQuery(route.params.connectionId, `UPDATE ${tableName} SET ${columnName} = ${valueToUpdate} WHERE ${primaryColumn} = ${primaryColumnValue}`)
     }
 }
 
