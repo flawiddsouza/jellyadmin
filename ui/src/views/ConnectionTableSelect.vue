@@ -132,7 +132,8 @@
                             <span v-if="row[rowHeader].type === 'null'" class="italic">NULL</span>
                         </template>
                         <template v-else>
-                            <input type="text" :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" @keydown.enter="updateRowColumn(row, rowHeader, $event.target.value)">
+                            <input type="text" :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" @keydown.enter="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'text'">
+                            <textarea :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'textarea'" v-textarea-fit-content spellcheck="false"></textarea>
                         </template>
                     </td>
                 </tr>
@@ -344,7 +345,9 @@ async function runQuery(manual=true) {
                 if(row[column.name] === null) {
                     row[column.name] = {
                         type: 'null',
-                        originalText: null
+                        originalText: null,
+                        inputType: column.type.startsWith('json') ? 'textarea' : 'text',
+                        columnType: column.type
                     }
                     return
                 }
@@ -354,7 +357,9 @@ async function runQuery(manual=true) {
                     row[column.name] = {
                         type: 'text',
                         text: text.slice(0, 100),
-                        originalText: text
+                        originalText: text,
+                        inputType: column.type.startsWith('json') ? 'textarea' : 'text',
+                        columnType: column.type
                     }
                 } else {
                     const filters = {
@@ -375,7 +380,9 @@ async function runQuery(manual=true) {
                         type: 'router-link',
                         to: `/${route.params.connectionId}/${foreignKeyMap[column.name].foreign_table}/select?filters=${btoa(JSON.stringify(filters))}`,
                         text: row[column.name],
-                        originalText: row[column.name]
+                        originalText: row[column.name],
+                        inputType: column.type.startsWith('json') ? 'textarea' : 'text',
+                        columnType: column.type
                     }
                 }
             })
@@ -476,14 +483,18 @@ async function updateRowColumn(row, column, value) {
             primaryColumn = `"${primaryColumn}"`
         }
 
-        let valueToUpdate = JSON.stringify(value).slice(1, -1)
+        let valueToUpdate = value
 
         if(currentConnection.value.type === 'mysql') {
-            valueToUpdate = `'${valueToUpdate}'`
+            valueToUpdate = `'${JSON.stringify(valueToUpdate).slice(1, -1)}'`
         }
 
         if(currentConnection.value.type === 'postgresql') {
-            valueToUpdate = `'${valueToUpdate}'`
+            if(row[column].columnType === 'jsonb') {
+                valueToUpdate = `'${valueToUpdate.replace(/'/g, "''")}'::jsonb`
+            } else {
+                valueToUpdate = `'${JSON.stringify(valueToUpdate).slice(1, -1)}'`
+            }
         }
 
         let primaryColumnValue = row[primaryColumnRaw].text
@@ -496,7 +507,19 @@ async function updateRowColumn(row, column, value) {
             primaryColumnValue = `'${primaryColumnValue}'`
         }
 
-        await api.runQuery(route.params.connectionId, `UPDATE ${tableName} SET ${columnName} = ${valueToUpdate} WHERE ${primaryColumn} = ${primaryColumnValue}`)
+        error.value = ''
+
+        const { success, data } = await api.runQuery(route.params.connectionId, `UPDATE ${tableName} SET ${columnName} = ${valueToUpdate} WHERE ${primaryColumn} = ${primaryColumnValue}`)
+
+        if(!success) {
+            error.value = data
+        }
+    }
+}
+
+const vTextareaFitContent =  {
+    mounted(element) {
+        element.style.height = element.scrollHeight + 'px'
     }
 }
 

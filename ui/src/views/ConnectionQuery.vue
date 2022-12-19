@@ -23,7 +23,7 @@
         </table>
     </template>
 
-    <textarea style="width: 531px; height: 313px; padding: 3px;" v-model="query"></textarea>
+    <textarea style="width: 531px; height: 313px; padding: 3px;" v-model="query" spellcheck="false"></textarea>
 
     <div class="mt-1">
         <button @click="runQuery">Run</button>
