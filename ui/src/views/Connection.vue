@@ -1,7 +1,7 @@
 <template>
     <template v-if="connectionLoaded">
-        <div style="display: grid; grid-template-columns: 300px 1fr; overflow: auto; height: 100%; white-space: nowrap;" v-if="!error">
-            <aside style="overflow: auto">
+        <div class="grid overflow-auto full-height" style="grid-template-columns: 300px 1fr; white-space: nowrap;" v-if="!error">
+            <aside class="overflow-auto">
                 <div>
                     <router-link :to="`/${route.params.connectionId}/query`">Query</router-link>
                 </div>
@@ -11,7 +11,7 @@
                     </li>
                 </ul>
             </aside>
-            <section style="overflow: auto; margin-left: 1rem;">
+            <section class="overflow-auto ml-2">
                 <router-view :key="$route.fullPath"></router-view>
             </section>
         </div>

@@ -1,146 +1,150 @@
 <template>
-    <h2>Select: {{ route.params.tableName }}</h2>
+    <div class="grid full-height" style="grid-template-rows: auto auto auto auto auto 1fr">
+        <h2>Select: {{ route.params.tableName }}</h2>
 
-    <div>
-        <router-link :to="`/${route.params.connectionId}/${route.params.tableName}/select`">Select data</router-link>
-        <router-link :to="`/${route.params.connectionId}/${route.params.tableName}/structure`" class="ml-2">Show structure</router-link>
+        <div>
+            <router-link :to="`/${route.params.connectionId}/${route.params.tableName}/select`">Select data</router-link>
+            <router-link :to="`/${route.params.connectionId}/${route.params.tableName}/structure`" class="ml-2">Show structure</router-link>
+        </div>
+
+        <form @submit.prevent="runQuery(true)" class="mt-1 overflow-auto">
+            <fieldset>
+                <legend><a href="#fieldset-select">Select</a></legend>
+                <div>
+                    <div v-for="(querySelectItem, querySelectItemIndex) in querySelect">
+                        <!-- <select>
+                            <option></option>
+                            <optgroup label="Functions">
+                                <option>char_length</option>
+                                <option>date</option>
+                                <option>from_unixtime</option>
+                                <option>lower</option>
+                                <option>round</option>
+                                <option>floor</option>
+                                <option>ceil</option>
+                                <option>sec_to_time</option>
+                                <option>time_to_sec</option>
+                                <option>upper</option>
+                            </optgroup>
+                            <optgroup label="Aggregation">
+                                <option>avg</option>
+                                <option>count</option>
+                                <option>count distinct</option>
+                                <option>group_concat</option>
+                                <option>max</option>
+                                <option>min</option>
+                                <option>sum</option>
+                            </optgroup>
+                        </select>
+                        ( -->
+                        <select v-model="querySelectItem.column" @change="handleQuerySelectItemChange(querySelectItemIndex)">
+                            <option value=""></option>
+                            <option :value="column.name" v-for="column in columns">{{ column.name }}</option>
+                        </select>
+                        <!-- ) -->
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend><a href="#fieldset-search">Search</a></legend>
+                <div>
+                    <div v-for="(querySearchItem, querySearchItemIndex) in querySearch">
+                        <select v-model="querySearchItem.column" @change="handleQuerySearchItemChange(querySearchItemIndex)">
+                            <option value=""></option>
+                            <option :value="column.name" v-for="column in columns">{{ column.name }}</option>
+                        </select>
+                        <select v-model="querySearchItem.operator" @change="handleQuerySearchItemChange(querySearchItemIndex)">
+                            <option>=</option>
+                            <option>&lt;</option>
+                            <option>&gt;</option>
+                            <option>&lt;=</option>
+                            <option>&gt;=</option>
+                            <option>!=</option>
+                            <option>LIKE</option>
+                            <option>LIKE %%</option>
+                            <option>REGEXP</option>
+                            <option>IN</option>
+                            <option>FIND_IN_SET</option>
+                            <option>IS NULL</option>
+                            <option>NOT LIKE</option>
+                            <option>NOT REGEXP</option>
+                            <option>NOT IN</option>
+                            <option>IS NOT NULL</option>
+                        </select>
+                        <input type="search" v-model="querySearchItem.value" @input="handleQuerySearchItemChange(querySearchItemIndex)">
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend><a href="#fieldset-sort">Sort</a></legend>
+                <div>
+                    <div v-for="(querySortItem, querySortItemIndex) in querySort">
+                        <select v-model="querySortItem.column" @change="handleQuerySortItemChange(querySortItemIndex)">
+                            <option value=""></option>
+                            <option :value="column.name" v-for="column in columns">{{ column.name }}</option>
+                        </select>
+                        <label><input type="checkbox" v-model="querySortItem.descending">descending</label>
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Limit</legend>
+                <div>
+                    <input type="number" style="width: 7ex" v-model="queryLimit">
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Action</legend>
+                <div>
+                    <button>Select</button>
+                </div>
+            </fieldset>
+        </form>
+
+        <div class="mt-1">
+            <code v-html="highlightSql(generatedQuery)"></code>
+            <router-link :to="getGeneratedQueryEditRoute()" class="ml-2">Edit</router-link>
+        </div>
+
+        <div class="message error mt-2" v-if="error">{{ error }}</div>
+
+        <template v-if="queryRan">
+            <div class="mt-2 message success" v-if="rows.length > 0">{{ new Intl.NumberFormat().format(rows.length) }} {{ rows.length > 1 ? 'rows' : 'row' }} returned</div>
+            <div class="mt-2 message success" v-if="rows.length === 0">No rows</div>
+            <div class="mt-2 overflow-auto">
+                <table class="sticky hover" v-if="rows.length > 0">
+                    <thead>
+                        <tr>
+                            <th v-for="rowHeader in rowHeaders">{{ rowHeader }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in rows">
+                            <td v-for="rowHeader in rowHeaders" :class="{ 'white-space-pre': row[rowHeader].type === 'text' && row[rowHeader].text.length > 100 }" @click.ctrl="row[rowHeader].edit = true">
+                                <template v-if="!row[rowHeader].edit">
+                                    <template v-if="row[rowHeader].type === 'text'">
+                                        <div class="flex flex-jc-sb">
+                                            <div>{{ row[rowHeader].text }}</div>
+                                            <div class="ml-1">
+                                                <button v-if="row[rowHeader].text.length === 100 && row[rowHeader].originalText.length > 100" @click="row[rowHeader].text = row[rowHeader].originalText">Expand</button>
+                                                <button v-if="row[rowHeader].text.length > 100"  @click="row[rowHeader].text = row[rowHeader].originalText.slice(0, 100)">Collapse</button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <router-link :to="row[rowHeader].to" v-if="row[rowHeader].type === 'router-link'">{{ row[rowHeader].text }}</router-link>
+                                    <span v-if="row[rowHeader].type === 'null'" class="italic">NULL</span>
+                                </template>
+                                <template v-else>
+                                    <input type="text" :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" @keydown.enter="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'text'">
+                                    <textarea :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'textarea'" v-textarea-fit-content spellcheck="false"></textarea>
+                                </template>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
     </div>
-
-    <form @submit.prevent="runQuery(true)" class="mt-1">
-        <fieldset>
-            <legend><a href="#fieldset-select">Select</a></legend>
-            <div>
-                <div v-for="(querySelectItem, querySelectItemIndex) in querySelect">
-                    <!-- <select>
-                        <option></option>
-                        <optgroup label="Functions">
-                            <option>char_length</option>
-                            <option>date</option>
-                            <option>from_unixtime</option>
-                            <option>lower</option>
-                            <option>round</option>
-                            <option>floor</option>
-                            <option>ceil</option>
-                            <option>sec_to_time</option>
-                            <option>time_to_sec</option>
-                            <option>upper</option>
-                        </optgroup>
-                        <optgroup label="Aggregation">
-                            <option>avg</option>
-                            <option>count</option>
-                            <option>count distinct</option>
-                            <option>group_concat</option>
-                            <option>max</option>
-                            <option>min</option>
-                            <option>sum</option>
-                        </optgroup>
-                    </select>
-                    ( -->
-                    <select v-model="querySelectItem.column" @change="handleQuerySelectItemChange(querySelectItemIndex)">
-                        <option value=""></option>
-                        <option :value="column.name" v-for="column in columns">{{ column.name }}</option>
-                    </select>
-                    <!-- ) -->
-                </div>
-            </div>
-        </fieldset>
-        <fieldset>
-            <legend><a href="#fieldset-search">Search</a></legend>
-            <div>
-                <div v-for="(querySearchItem, querySearchItemIndex) in querySearch">
-                    <select v-model="querySearchItem.column" @change="handleQuerySearchItemChange(querySearchItemIndex)">
-                        <option value=""></option>
-                        <option :value="column.name" v-for="column in columns">{{ column.name }}</option>
-                    </select>
-                    <select v-model="querySearchItem.operator" @change="handleQuerySearchItemChange(querySearchItemIndex)">
-                        <option>=</option>
-                        <option>&lt;</option>
-                        <option>&gt;</option>
-                        <option>&lt;=</option>
-                        <option>&gt;=</option>
-                        <option>!=</option>
-                        <option>LIKE</option>
-                        <option>LIKE %%</option>
-                        <option>REGEXP</option>
-                        <option>IN</option>
-                        <option>FIND_IN_SET</option>
-                        <option>IS NULL</option>
-                        <option>NOT LIKE</option>
-                        <option>NOT REGEXP</option>
-                        <option>NOT IN</option>
-                        <option>IS NOT NULL</option>
-                    </select>
-                    <input type="search" v-model="querySearchItem.value" @input="handleQuerySearchItemChange(querySearchItemIndex)">
-                </div>
-            </div>
-        </fieldset>
-        <fieldset>
-            <legend><a href="#fieldset-sort">Sort</a></legend>
-            <div>
-                <div v-for="(querySortItem, querySortItemIndex) in querySort">
-                    <select v-model="querySortItem.column" @change="handleQuerySortItemChange(querySortItemIndex)">
-                        <option value=""></option>
-                        <option :value="column.name" v-for="column in columns">{{ column.name }}</option>
-                    </select>
-                    <label><input type="checkbox" v-model="querySortItem.descending">descending</label>
-                </div>
-            </div>
-        </fieldset>
-        <fieldset>
-            <legend>Limit</legend>
-            <div>
-                <input type="number" style="width: 7ex" v-model="queryLimit">
-            </div>
-        </fieldset>
-        <fieldset>
-            <legend>Action</legend>
-            <div>
-                <button>Select</button>
-            </div>
-        </fieldset>
-    </form>
-
-    <div class="mt-1">
-        <code v-html="highlightSql(generatedQuery)"></code>
-        <router-link :to="getGeneratedQueryEditRoute()" class="ml-2">Edit</router-link>
-    </div>
-
-    <div class="message error mt-2" v-if="error">{{ error }}</div>
-
-    <template v-if="queryRan">
-        <div class="mt-2 message success" v-if="rows.length > 0">{{ new Intl.NumberFormat().format(rows.length) }} {{ rows.length > 1 ? 'rows' : 'row' }} returned</div>
-        <table class="mt-2 sticky hover" v-if="rows.length > 0">
-            <thead>
-                <tr>
-                    <th v-for="rowHeader in rowHeaders">{{ rowHeader }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="row in rows">
-                    <td v-for="rowHeader in rowHeaders" :class="{ 'white-space-pre': row[rowHeader].type === 'text' && row[rowHeader].text.length > 100 }" @click.ctrl="row[rowHeader].edit = true">
-                        <template v-if="!row[rowHeader].edit">
-                            <template v-if="row[rowHeader].type === 'text'">
-                                <div class="flex flex-jc-sb">
-                                    <div>{{ row[rowHeader].text }}</div>
-                                    <div class="ml-1">
-                                        <button v-if="row[rowHeader].text.length === 100 && row[rowHeader].originalText.length > 100" @click="row[rowHeader].text = row[rowHeader].originalText">Expand</button>
-                                        <button v-if="row[rowHeader].text.length > 100"  @click="row[rowHeader].text = row[rowHeader].originalText.slice(0, 100)">Collapse</button>
-                                    </div>
-                                </div>
-                            </template>
-                            <router-link :to="row[rowHeader].to" v-if="row[rowHeader].type === 'router-link'">{{ row[rowHeader].text }}</router-link>
-                            <span v-if="row[rowHeader].type === 'null'" class="italic">NULL</span>
-                        </template>
-                        <template v-else>
-                            <input type="text" :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" @keydown.enter="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'text'">
-                            <textarea :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'textarea'" v-textarea-fit-content spellcheck="false"></textarea>
-                        </template>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <div class="mt-2 message success" v-else>No rows</div>
-    </template>
 </template>
 
 <script setup>
