@@ -330,6 +330,10 @@ async function runQuery(manual=true) {
 
         rows.value.forEach(row => {
             columns.value.forEach(column => {
+                if(row[column.name] === undefined) {
+                    return
+                }
+
                 if(row[column.name] === null) {
                     row[column.name] = {
                         type: 'null'
