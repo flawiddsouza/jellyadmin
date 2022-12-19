@@ -117,18 +117,23 @@
             </thead>
             <tbody>
                 <tr v-for="row in rows">
-                    <td v-for="rowHeader in rowHeaders" :class="{ 'white-space-pre': row[rowHeader].type === 'text' && row[rowHeader].text.length > 100 }">
-                        <template v-if="row[rowHeader].type === 'text'">
-                            <div class="flex flex-jc-sb">
-                                <div>{{ row[rowHeader].text }}</div>
-                                <div class="ml-1">
-                                    <button v-if="row[rowHeader].text.length === 100 && row[rowHeader].originalText.length > 100" @click="row[rowHeader].text = row[rowHeader].originalText">Expand</button>
-                                    <button v-if="row[rowHeader].text.length > 100"  @click="row[rowHeader].text = row[rowHeader].originalText.slice(0, 100)">Collapse</button>
+                    <td v-for="rowHeader in rowHeaders" :class="{ 'white-space-pre': row[rowHeader].type === 'text' && row[rowHeader].text.length > 100 }" @click.ctrl="row[rowHeader].edit = true">
+                        <template v-if="!row[rowHeader].edit">
+                            <template v-if="row[rowHeader].type === 'text'">
+                                <div class="flex flex-jc-sb">
+                                    <div>{{ row[rowHeader].text }}</div>
+                                    <div class="ml-1">
+                                        <button v-if="row[rowHeader].text.length === 100 && row[rowHeader].originalText.length > 100" @click="row[rowHeader].text = row[rowHeader].originalText">Expand</button>
+                                        <button v-if="row[rowHeader].text.length > 100"  @click="row[rowHeader].text = row[rowHeader].originalText.slice(0, 100)">Collapse</button>
+                                    </div>
                                 </div>
-                            </div>
+                            </template>
+                            <router-link :to="row[rowHeader].to" v-if="row[rowHeader].type === 'router-link'">{{ row[rowHeader].text }}</router-link>
+                            <span v-if="row[rowHeader].type === 'null'" class="italic">NULL</span>
                         </template>
-                        <router-link :to="row[rowHeader].to" v-if="row[rowHeader].type === 'router-link'">{{ row[rowHeader].text }}</router-link>
-                        <span v-if="row[rowHeader].type === 'null'" class="italic">NULL</span>
+                        <template v-else>
+                            <input type="text" :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" @keydown.enter="updateRowColumn(row, rowHeader, $event.target.value)">
+                        </template>
                     </td>
                 </tr>
             </tbody>
@@ -150,6 +155,7 @@ const route = useRoute()
 const store = useStore()
 const { currentConnection } = storeToRefs(store)
 const columns = ref([])
+const indexes = ref([])
 const foreignKeys = ref([])
 const rowHeaders = ref([])
 const rows = ref([])
@@ -179,6 +185,7 @@ const queryLimit = ref('50')
 async function getConnectionTable() {
     const { data: table } = await api.getConnectionTable(route.params.connectionId, route.params.tableName)
     columns.value = table.columns
+    indexes.value = table.indexes
     foreignKeys.value = table.foreignKeys
 }
 
@@ -336,7 +343,8 @@ async function runQuery(manual=true) {
 
                 if(row[column.name] === null) {
                     row[column.name] = {
-                        type: 'null'
+                        type: 'null',
+                        originalText: null
                     }
                     return
                 }
@@ -366,7 +374,8 @@ async function runQuery(manual=true) {
                     row[column.name] = {
                         type: 'router-link',
                         to: `/${route.params.connectionId}/${foreignKeyMap[column.name].foreign_table}/select?filters=${btoa(JSON.stringify(filters))}`,
-                        text: row[column.name]
+                        text: row[column.name],
+                        originalText: row[column.name]
                     }
                 }
             })
@@ -413,6 +422,58 @@ function handleQuerySortItemChange(querySortItemIndex) {
             column: '',
             descending: false
         })
+    }
+}
+
+async function updateRowColumn(row, column, value) {
+    if(row[column].edit === false) {
+        return
+    }
+
+    row[column].edit = false
+
+    if(currentConnection.value.type === 'postgresql') {
+        return
+    }
+
+    if(row[column].type === 'text') {
+        row[column]['originalText'] = value
+        row[column]['text'] = value.slice(0, 100)
+
+        let tableName = route.params.tableName
+
+        if(currentConnection.value.type === 'mysql') {
+            tableName = `\`${route.params.tableName}\``
+        }
+
+        if(currentConnection.value.type === 'postgresql') {
+            tableName = `"${route.params.tableName}"`
+        }
+
+        let columnName = column
+
+        if(currentConnection.value.type === 'mysql') {
+            columnName = `\`${columnName}\``
+        }
+
+        if(currentConnection.value.type === 'postgresql') {
+            columnName = `"${columnName}"`
+        }
+
+        const primaryColumnRaw = indexes.value.find(index => index.type === 'PRIMARY').column
+        let primaryColumn = primaryColumnRaw
+
+        if(currentConnection.value.type === 'mysql') {
+            primaryColumn = `\`${primaryColumn}\``
+        }
+
+        if(currentConnection.value.type === 'postgresql') {
+            primaryColumn = `"${primaryColumn}"`
+        }
+
+        const valueToUpdate = JSON.stringify(value).slice(1, -1)
+
+        await api.runQuery(route.params.connectionId, `UPDATE ${tableName} SET ${columnName} = "${valueToUpdate}" WHERE ${primaryColumn} = "${row[primaryColumnRaw].text}"`)
     }
 }
 
