@@ -22,15 +22,15 @@ function setDocumentTitle() {
     const currentRoute = route.matched[route.matched.length - 1].path
 
     if(currentRoute === '/:connectionId') {
-        document.title = `${currentConnection.value.name} - Jelly Database`
+        document.title = `${currentConnection.value.name} - JellyAdmin`
     }
 
     if(currentRoute === '/:connectionId/:tableName/select') {
-        document.title = `Select: ${route.params.tableName} - ${currentConnection.value.name} - Jelly Database`
+        document.title = `Select: ${route.params.tableName} - ${currentConnection.value.name} - JellyAdmin`
     }
 
     if(currentRoute === '/:connectionId/:tableName/structure') {
-        document.title = `Table: ${route.params.tableName} - ${currentConnection.value.name} - Jelly Database`
+        document.title = `Table: ${route.params.tableName} - ${currentConnection.value.name} - JellyAdmin`
     }
 }
 

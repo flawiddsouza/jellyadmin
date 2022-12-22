@@ -17,5 +17,5 @@ npm start
 ## Quick install on distributions with systemd:
 
 ```
-curl -s https://raw.githubusercontent.com/flawiddsouza/jelly-database/main/install.sh | bash
+curl -s https://raw.githubusercontent.com/flawiddsouza/jellyadmin/main/install.sh | bash
 ```
