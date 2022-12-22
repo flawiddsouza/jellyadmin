@@ -1,6 +1,8 @@
 export const http = {
-    async get(url) {
-        const response = await fetch(url)
+    async get(url, abortControllerSignal=null) {
+        const response = await fetch(url, {
+            signal: abortControllerSignal
+        })
         if(response.status !== 400) {
             return {
                 success: true,

@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, onBeforeUnmount, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from '../store'
 import { storeToRefs } from 'pinia'
@@ -35,9 +35,10 @@ const { currentConnection } = storeToRefs(store)
 const tables = ref([])
 const connectionLoaded = ref(false)
 const error = ref('')
+const abortController = new AbortController()
 
 async function getConnection() {
-    const { success, data } = await api.getConnection(route.params.connectionId)
+    const { success, data } = await api.getConnection(route.params.connectionId, abortController.signal)
     if(success) {
         currentConnection.value = data.details
         if(data.tables.success) {
@@ -53,5 +54,9 @@ async function getConnection() {
 
 onBeforeMount(() => {
     getConnection()
+})
+
+onBeforeUnmount(() => {
+    abortController.abort()
 })
 </script>

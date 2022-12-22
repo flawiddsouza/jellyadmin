@@ -12,8 +12,8 @@ export async function addConnection(connection) {
     return http.post('/api/connection', connection)
 }
 
-export async function getConnection(connectionId) {
-    return http.get(`/api/connection/${connectionId}`)
+export async function getConnection(connectionId, abortControllerSignal) {
+    return http.get(`/api/connection/${connectionId}`, abortControllerSignal)
 }
 
 export async function getConnectionTable(connectionId, tableName) {
