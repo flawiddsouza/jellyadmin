@@ -134,7 +134,7 @@ export async function getTableDetails(connectionId, tableName) {
             columns = result1[0]
 
             let result2 = await sql.execute(`
-                SHOW INDEX FROM ${tableName};
+                SHOW INDEX FROM \`${tableName}\`;
             `)
 
             indexes = result2[0].map(row => {
