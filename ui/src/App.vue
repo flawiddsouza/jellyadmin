@@ -15,22 +15,30 @@ const store = useStore()
 const { currentConnection } = storeToRefs(store)
 
 function setDocumentTitle() {
-    if(currentConnection.value === null) {
-        return
-    }
-
     const currentRoute = route.matched[route.matched.length - 1].path
 
-    if(currentRoute === '/:connectionId') {
-        document.title = `${currentConnection.value.name} - JellyAdmin`
+    const baseTitle = 'JellyAdmin'
+
+    if(currentRoute === '/') {
+        document.title = baseTitle
     }
 
-    if(currentRoute === '/:connectionId/:tableName/select') {
-        document.title = `Select: ${route.params.tableName} - ${currentConnection.value.name} - JellyAdmin`
-    }
+    if(currentConnection.value !== null) {
+        if(currentRoute === '/:connectionId') {
+            document.title = `${currentConnection.value.name} - ${baseTitle}`
+        }
 
-    if(currentRoute === '/:connectionId/:tableName/structure') {
-        document.title = `Table: ${route.params.tableName} - ${currentConnection.value.name} - JellyAdmin`
+        if(currentRoute === '/:connectionId/query') {
+            document.title = `Query - ${baseTitle}`
+        }
+
+        if(currentRoute === '/:connectionId/:tableName/select') {
+            document.title = `Select: ${route.params.tableName} - ${currentConnection.value.name} - ${baseTitle}`
+        }
+
+        if(currentRoute === '/:connectionId/:tableName/structure') {
+            document.title = `Table: ${route.params.tableName} - ${currentConnection.value.name} - ${baseTitle}`
+        }
     }
 }
 
