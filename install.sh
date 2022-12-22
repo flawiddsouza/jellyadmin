@@ -2,7 +2,8 @@ sudo systemctl stop jelly-database
 sudo systemctl disable jelly-database
 
 mkdir -p ~/.local/bin/jelly-database/
-wget https://github.com/flawiddsouza/jelly-database/releases/download/v0.0.2/jelly-database-linux -O ~/.local/bin/jelly-database/jelly-database-linux
+wget https://github.com/flawiddsouza/jelly-database/releases/download/v0.0.2/jelly-database-linux.gz -O ~/.local/bin/jelly-database/jelly-database-linux.gz
+gzip -d --force ~/.local/bin/jelly-database/jelly-database-linux.gz
 chmod +x ~/.local/bin/jelly-database/jelly-database-linux
 
 echo "[Unit]
