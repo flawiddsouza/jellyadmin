@@ -7,7 +7,7 @@
                 </div>
                 <ul style="list-style: none; margin-left: 0;" class="mt-1">
                     <li v-for="table in tables">
-                        <router-link :to="`/${route.params.connectionId}/${table.table_name}/select`">select</router-link>&nbsp;<router-link :to="`/${route.params.connectionId}/${table.table_name}/structure`">{{ table.table_name }}</router-link>
+                        <router-link :to="`/${route.params.connectionId}/${table.table_name}/select`" style="margin-right: 0.4rem">select</router-link><router-link :to="`/${route.params.connectionId}/${table.table_name}/structure`">{{ table.table_name }}</router-link>
                     </li>
                 </ul>
             </aside>
