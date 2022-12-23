@@ -268,25 +268,29 @@ async function getConnectionTable() {
     }
 }
 
-function generateQuery() {
+function generateQuery(count=false) {
     const queryParts = ['SELECT']
 
     const querySelectTemp = querySelect.value.filter(querySelectItem => querySelectItem.column.trim())
 
-    if(querySelectTemp.length === 0) {
-        queryParts.push('*')
+    if(!count) {
+        if(querySelectTemp.length === 0) {
+            queryParts.push('*')
+        } else {
+            queryParts.push(querySelectTemp.map(querySelectItem => {
+                if(currentConnection.value.type === 'mysql') {
+                    return `\`${querySelectItem.column}\``
+                }
+
+                if(currentConnection.value.type === 'postgresql') {
+                    return `"${querySelectItem.column}"`
+                }
+
+                return querySelectItem.column
+            }).join(', '))
+        }
     } else {
-        queryParts.push(querySelectTemp.map(querySelectItem => {
-            if(currentConnection.value.type === 'mysql') {
-                return `\`${querySelectItem.column}\``
-            }
-
-            if(currentConnection.value.type === 'postgresql') {
-                return `"${querySelectItem.column}"`
-            }
-
-            return querySelectItem.column
-        }).join(', '))
+        queryParts.push('COUNT(*) as count')
     }
 
     queryParts.push('FROM')
@@ -357,12 +361,14 @@ function generateQuery() {
         queryParts.push(`${column}${querySortItem.descending ? ' DESC' : ''}`)
     })
 
-    if(queryLimit.value !== '') {
-        queryParts.push(`LIMIT ${queryLimit.value}`)
-    }
+    if(!count) {
+        if(queryLimit.value !== '') {
+            queryParts.push(`LIMIT ${queryLimit.value}`)
+        }
 
-    if(currentPage.value > 1) {
-        queryParts.push(`OFFSET ${(currentPage.value * queryLimit.value) - queryLimit.value}`)
+        if(currentPage.value > 1) {
+            queryParts.push(`OFFSET ${(currentPage.value * queryLimit.value) - queryLimit.value}`)
+        }
     }
 
     querySelect.value = querySelectTemp
@@ -414,18 +420,7 @@ async function runQuery(manual=true) {
         rows.value = data
         rowHeaders.value = rows.value.length > 0 ? Object.keys(rows.value[0]) : []
 
-
-        let tableName = route.params.tableName
-
-        if(currentConnection.value.type === 'mysql') {
-            tableName = `\`${route.params.tableName}\``
-        }
-
-        if(currentConnection.value.type === 'postgresql') {
-            tableName = `"${route.params.tableName}"`
-        }
-
-        const { data: totalRowsData } = await api.runQuery(route.params.connectionId, `SELECT COUNT(*) AS count FROM ${tableName}`)
+        const { data: totalRowsData } = await api.runQuery(route.params.connectionId, generateQuery(true))
         totalRows.value = totalRowsData[0].count
 
         totalPages.value = Math.ceil(totalRows.value / queryLimit.value)
