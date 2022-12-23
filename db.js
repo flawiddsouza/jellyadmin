@@ -35,7 +35,7 @@ export function migrate() {
 }
 
 export function getConnections() {
-    return db.prepare('SELECT * FROM connections ORDER BY name').all()
+    return db.prepare('SELECT * FROM connections ORDER BY name, database').all()
 }
 
 export function addConnection(name, type, host, port, username, password, database, schema) {
