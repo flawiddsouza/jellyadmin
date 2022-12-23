@@ -324,14 +324,12 @@ function generateQuery() {
 
         let value = querySearchItem.value
 
-        if(value) {
-            if(currentConnection.value.type === 'mysql') {
-                value = `'${value}'`
-            }
+        if(currentConnection.value.type === 'mysql') {
+            value = `'${value}'`
+        }
 
-            if(currentConnection.value.type === 'postgresql') {
-                value = `'${value}'`
-            }
+        if(currentConnection.value.type === 'postgresql') {
+            value = `'${value}'`
         }
 
         queryParts.push(`${column} ${querySearchItem.operator} ${value}`)
