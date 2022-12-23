@@ -165,7 +165,7 @@
                 <legend>Whole result</legend>
                 <label>
                     <input type="checkbox" value="1" class="vertical-align-middle" v-model="selectAllRows" />
-                    {{ totalRows }} rows
+                    {{ new Intl.NumberFormat().format(totalRows) }} rows
                 </label>
             </fieldset>
             <!-- <fieldset>
@@ -175,7 +175,7 @@
                 </div>
             </fieldset> -->
             <fieldset>
-                <legend>Selected <span>({{ selectAllRows ? totalRows : selectedRowIds.length }})</span></legend>
+                <legend>Selected <span>({{ new Intl.NumberFormat().format(selectAllRows ? totalRows : selectedRowIds.length) }})</span></legend>
                 <div>
                     <button disabled>Edit</button>
                     <button class="ml-1" disabled>Clone</button>
@@ -184,7 +184,7 @@
             </fieldset>
             <fieldset>
                 <legend>
-                    Export <span>({{ selectedRowIds.length === 0 ? totalRows : (selectAllRows ? totalRows : selectedRowIds.length) }})</span>
+                    Export <span>({{ new Intl.NumberFormat().format(selectedRowIds.length === 0 ? totalRows : (selectAllRows ? totalRows : selectedRowIds.length)) }})</span>
                 </legend>
                 <div>
                     <select>
