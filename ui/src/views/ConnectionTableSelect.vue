@@ -155,10 +155,15 @@
             <fieldset v-if="totalRows > rows.length">
                 <legend>Page</legend>
                 <template v-for="page in totalPages">
-                    <template v-if="page === currentPage">
-                        <span :class="{ 'ml-1': page > 1 }">{{ page }}</span>
+                    <template v-if="shouldDisplayPage(page)">
+                        <template v-if="page === currentPage">
+                            <span :class="{ 'ml-1': page > 1 }">{{ page }}</span>
+                        </template>
+                        <a href="#" :class="{ 'ml-1': page > 1 }" @click.prevent="changePage(page)" v-else>{{ page }}</a>
                     </template>
-                    <a href="#" :class="{ 'ml-1': page > 1 }" @click.prevent="changePage(page)" v-else>{{ page }}</a>
+                    <template v-else>
+                        <span class="ml-1" v-if="page === 2 || page === totalPages - 1">...</span>
+                    </template>
                 </template>
             </fieldset>
             <fieldset>
@@ -612,6 +617,54 @@ function toggleSelectAllRows() {
 function changePage(page) {
     currentPage.value = page
     runQuery(true)
+}
+
+function shouldDisplayPage(page) {
+    if(page === 1) {
+        return true
+    }
+
+    if(currentPage.value - 4 === page) {
+        return true
+    }
+
+    if(currentPage.value - 3 === page) {
+        return true
+    }
+
+    if(currentPage.value - 2 === page) {
+        return true
+    }
+
+    if(currentPage.value - 1 === page) {
+        return true
+    }
+
+    if(currentPage.value === page) {
+        return true
+    }
+
+    if(currentPage.value + 1 === page) {
+        return true
+    }
+
+    if(currentPage.value + 2 === page) {
+        return true
+    }
+
+    if(currentPage.value + 3 === page) {
+        return true
+    }
+
+    if(currentPage.value + 4 === page) {
+        return true
+    }
+
+    if(page === totalPages.value) {
+        return true
+    }
+
+    return false
 }
 
 const vTextareaFitContent =  {
