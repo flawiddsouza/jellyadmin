@@ -165,7 +165,7 @@
                 <legend>Whole result</legend>
                 <label>
                     <input type="checkbox" value="1" class="vertical-align-middle" v-model="selectAllRows" />
-                    {{ new Intl.NumberFormat().format(totalRows) }} rows
+                    {{ new Intl.NumberFormat().format(totalRows) }}  {{ totalRows > 1 ? 'rows' : 'row' }}
                 </label>
             </fieldset>
             <!-- <fieldset>
