@@ -74,3 +74,7 @@ table.sticky thead th:after, table.sticky tbody th:after {
 table.hover tbody > tr:hover {
     background: #eee;
 }
+
+table tbody > tr.selected, table tbody > tr.selected:hover {
+    background: #ddf;
+}

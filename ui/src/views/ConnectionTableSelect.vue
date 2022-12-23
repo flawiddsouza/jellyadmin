@@ -115,11 +115,17 @@
                 <table class="sticky hover" v-if="rows.length > 0">
                     <thead>
                         <tr>
+                            <th>
+                                <input type="checkbox" class="vertical-align-middle" :checked="selectedRowIds.length === rows.length" @click="toggleSelectAllRows">
+                            </th>
                             <th v-for="rowHeader in rowHeaders">{{ rowHeader }}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="row in rows">
+                        <tr v-for="row in rows" :class="{ 'selected': selectedRowIds.includes(row[primaryColumn].originalText) }">
+                            <td>
+                                <input type="checkbox" class="vertical-align-middle" :value="row[primaryColumn].originalText" v-model="selectedRowIds">
+                            </td>
                             <td v-for="rowHeader in rowHeaders" :class="{ 'white-space-pre': row[rowHeader].type === 'text' && row[rowHeader].text.length > 100 }" @click.ctrl="row[rowHeader].edit = true">
                                 <template v-if="!row[rowHeader].edit">
                                     <template v-if="row[rowHeader].type === 'text'">
@@ -144,6 +150,58 @@
                 </table>
             </div>
         </template>
+
+        <footer>
+            <fieldset v-if="totalRows > rows.length">
+                <legend>Page</legend>
+                <template v-for="page in totalPages">
+                    <template v-if="page === currentPage">
+                        <span :class="{ 'ml-1': page > 1 }">{{ page }}</span>
+                    </template>
+                    <a href="#" :class="{ 'ml-1': page > 1 }" @click.prevent="changePage(page)" v-else>{{ page }}</a>
+                </template>
+            </fieldset>
+            <fieldset>
+                <legend>Whole result</legend>
+                <label>
+                    <input type="checkbox" value="1" class="vertical-align-middle" v-model="selectAllRows" />
+                    {{ totalRows }} rows
+                </label>
+            </fieldset>
+            <!-- <fieldset>
+                <legend>Modify</legend>
+                <div>
+                    <button title="Ctrl+click on a value to modify it.">Save</button>
+                </div>
+            </fieldset> -->
+            <fieldset>
+                <legend>Selected <span>({{ selectAllRows ? totalRows : selectedRowIds.length }})</span></legend>
+                <div>
+                    <button disabled>Edit</button>
+                    <button class="ml-1" disabled>Clone</button>
+                    <button class="ml-1" disabled>Delete</button>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>
+                    Export <span>({{ selectedRowIds.length === 0 ? totalRows : (selectAllRows ? totalRows : selectedRowIds.length) }})</span>
+                </legend>
+                <div>
+                    <select>
+                        <option value="text" selected>open</option>
+                        <option value="file">save</option>
+                        <!-- <option value="gz">gzip</option> -->
+                    </select>
+                    <select class="ml-1">
+                        <option value="sql">SQL</option>
+                        <option value="csv" selected>CSV,</option>
+                        <!-- <option value="csv;">CSV;</option> -->
+                        <!-- <option value="tsv">TSV</option> -->
+                    </select>
+                    <button class="ml-1">Export</button>
+                </div>
+            </fieldset>
+        </footer>
     </div>
 </template>
 
@@ -161,9 +219,11 @@ const store = useStore()
 const { currentConnection } = storeToRefs(store)
 const columns = ref([])
 const indexes = ref([])
+const primaryColumn = ref(null)
 const foreignKeys = ref([])
 const rowHeaders = ref([])
 const rows = ref([])
+const totalRows = ref(0)
 const error = ref('')
 const queryRan = ref(false)
 const generatedQuery = ref('')
@@ -186,12 +246,26 @@ const querySort = ref([
     }
 ])
 const queryLimit = ref('50')
+const selectedRowIds = ref([])
+const selectAllRows = ref(false)
+const totalPages = ref(1)
+const currentPage = ref(1)
 
 async function getConnectionTable() {
     const { data: table } = await api.getConnectionTable(route.params.connectionId, route.params.tableName)
     columns.value = table.columns
     indexes.value = table.indexes
     foreignKeys.value = table.foreignKeys
+
+    primaryColumn.value = indexes.value.find(index => index.type === 'PRIMARY').column
+
+    if(currentConnection.value.type === 'postgresql') {
+        const regex = /\((.*)\)/
+        const matches = regex.exec(primaryColumn.value)
+        if(matches.length === 2) {
+            primaryColumn.value  = matches[1]
+        }
+    }
 }
 
 function generateQuery() {
@@ -289,6 +363,10 @@ function generateQuery() {
         queryParts.push(`LIMIT ${queryLimit.value}`)
     }
 
+    if(currentPage.value > 1) {
+        queryParts.push(`OFFSET ${(currentPage.value * queryLimit.value) - queryLimit.value}`)
+    }
+
     querySelect.value = querySelectTemp
     querySelect.value.push({
         column: ''
@@ -317,6 +395,8 @@ async function runQuery(manual=true) {
     rows.value = []
     rowHeaders.value = []
     error.value = ''
+    totalRows.value = 0
+    selectedRowIds.value = []
 
     if(manual) {
         addQueryParamsToRoute(route, {
@@ -325,7 +405,8 @@ async function runQuery(manual=true) {
                 search: querySearch.value,
                 sort: querySort.value,
                 limit: queryLimit.value
-            }))
+            })),
+            page: currentPage.value
         })
     }
 
@@ -334,6 +415,22 @@ async function runQuery(manual=true) {
     if(success) {
         rows.value = data
         rowHeaders.value = rows.value.length > 0 ? Object.keys(rows.value[0]) : []
+
+
+        let tableName = route.params.tableName
+
+        if(currentConnection.value.type === 'mysql') {
+            tableName = `\`${route.params.tableName}\``
+        }
+
+        if(currentConnection.value.type === 'postgresql') {
+            tableName = `"${route.params.tableName}"`
+        }
+
+        const { data: totalRowsData } = await api.runQuery(route.params.connectionId, `SELECT COUNT(*) AS count FROM ${tableName}`)
+        totalRows.value = totalRowsData[0].count
+
+        totalPages.value = Math.ceil(totalRows.value / queryLimit.value)
 
         const foreignKeyMap = foreignKeys.value.reduce((prev, curr) => {
             prev[curr.column] = curr
@@ -467,24 +564,14 @@ async function updateRowColumn(row, column, value) {
             columnName = `"${columnName}"`
         }
 
-        let primaryColumnRaw = indexes.value.find(index => index.type === 'PRIMARY').column
-
-        if(currentConnection.value.type === 'postgresql') {
-            const regex = /\((.*)\)/
-            const matches = regex.exec(primaryColumnRaw)
-            if(matches.length === 2) {
-                primaryColumnRaw = matches[1]
-            }
-        }
-
-        let primaryColumn = primaryColumnRaw
+        let primaryColumnWrapped = primaryColumn.value
 
         if(currentConnection.value.type === 'mysql') {
-            primaryColumn = `\`${primaryColumn}\``
+            primaryColumnWrapped = `\`${primaryColumnWrapped}\``
         }
 
         if(currentConnection.value.type === 'postgresql') {
-            primaryColumn = `"${primaryColumn}"`
+            primaryColumnWrapped = `"${primaryColumnWrapped}"`
         }
 
         let valueToUpdate = value
@@ -501,7 +588,7 @@ async function updateRowColumn(row, column, value) {
             }
         }
 
-        let primaryColumnValue = row[primaryColumnRaw].text
+        let primaryColumnValue = row[primaryColumn.value].text
 
         if(currentConnection.value.type === 'mysql') {
             primaryColumnValue = `'${primaryColumnValue}'`
@@ -513,12 +600,25 @@ async function updateRowColumn(row, column, value) {
 
         error.value = ''
 
-        const { success, data } = await api.runQuery(route.params.connectionId, `UPDATE ${tableName} SET ${columnName} = ${valueToUpdate} WHERE ${primaryColumn} = ${primaryColumnValue}`)
+        const { success, data } = await api.runQuery(route.params.connectionId, `UPDATE ${tableName} SET ${columnName} = ${valueToUpdate} WHERE ${primaryColumnWrapped} = ${primaryColumnValue}`)
 
         if(!success) {
             error.value = data
         }
     }
+}
+
+function toggleSelectAllRows() {
+    if(selectedRowIds.value.length !== rows.value.length) {
+        selectedRowIds.value = rows.value.map(row => row[primaryColumn.value].originalText)
+    } else {
+        selectedRowIds.value = []
+    }
+}
+
+function changePage(page) {
+    currentPage.value = page
+    runQuery(true)
 }
 
 const vTextareaFitContent =  {
@@ -529,6 +629,7 @@ const vTextareaFitContent =  {
 
 onBeforeMount(async() => {
     await getConnectionTable()
+
     if(route.query.filters) {
         try {
             const parsedFilters = JSON.parse(atob(route.query.filters))
@@ -550,6 +651,11 @@ onBeforeMount(async() => {
             }
         } catch {}
     }
+
+    if(route.query.page) {
+        currentPage.value = Number(route.query.page)
+    }
+
     await runQuery(false)
 })
 </script>
