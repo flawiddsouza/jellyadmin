@@ -192,18 +192,18 @@
                     Export <span>({{ new Intl.NumberFormat().format(selectedRowIds.length === 0 ? totalRows : (selectAllRows ? totalRows : selectedRowIds.length)) }})</span>
                 </legend>
                 <div>
-                    <select>
-                        <option value="text" selected>open</option>
-                        <option value="file">save</option>
+                    <select v-model="exportAction">
+                        <option value="save">save</option>
+                        <option value="open">open</option>
                         <!-- <option value="gz">gzip</option> -->
                     </select>
-                    <select class="ml-1">
+                    <select class="ml-1" v-model="exportType">
                         <option value="sql">SQL</option>
-                        <option value="csv" selected>CSV,</option>
-                        <!-- <option value="csv;">CSV;</option> -->
+                        <option value="csv">CSV,</option>
+                        <option value="csv;">CSV;</option>
                         <!-- <option value="tsv">TSV</option> -->
                     </select>
-                    <button class="ml-1">Export</button>
+                    <button class="ml-1" @click="exportSelected">Export</button>
                 </div>
             </fieldset>
         </footer>
@@ -218,6 +218,7 @@ import { storeToRefs } from 'pinia'
 import * as api from '../libs/api.js'
 import { highlight } from 'sql-highlight'
 import { addQueryParamsToRoute } from '../libs/helpers.js'
+import Papa from 'papaparse'
 
 const route = useRoute()
 const store = useStore()
@@ -255,6 +256,8 @@ const selectedRowIds = ref([])
 const selectAllRows = ref(false)
 const totalPages = ref(1)
 const currentPage = ref(1)
+const exportAction = ref('save')
+const exportType = ref('sql')
 
 async function getConnectionTable() {
     const { data: table } = await api.getConnectionTable(route.params.connectionId, route.params.tableName)
@@ -273,7 +276,7 @@ async function getConnectionTable() {
     }
 }
 
-function generateQuery(count=false) {
+function generateQuery(count=false, noLimit=false) {
     const queryParts = ['SELECT']
 
     const querySelectTemp = querySelect.value.filter(querySelectItem => querySelectItem.column.trim())
@@ -366,7 +369,7 @@ function generateQuery(count=false) {
         queryParts.push(`${column}${querySortItem.descending ? ' DESC' : ''}`)
     })
 
-    if(!count) {
+    if(!count && !noLimit) {
         if(queryLimit.value !== '') {
             queryParts.push(`LIMIT ${queryLimit.value}`)
         }
@@ -665,6 +668,64 @@ function shouldDisplayPage(page) {
     }
 
     return false
+}
+
+async function exportSelected() {
+    const { data: rowsToExport } = await api.runQuery(route.params.connectionId, generateQuery(false, true))
+
+    let textToExport = null
+
+    if(exportType.value.startsWith('csv')) {
+        textToExport = Papa.unparse(rowsToExport, {
+            delimiter: exportType.value === 'csv' ? ',' : ';'
+        })
+    }
+
+    if(exportType.value === 'sql') {
+    }
+
+    if(exportAction.value === 'open') {
+        const win = window.open()
+        const pre = win.document.createElement('pre')
+        pre.style.wordBreak = 'break-word'
+        pre.style.whiteSpace = 'pre-wrap'
+        pre.textContent = textToExport
+        win.document.body.appendChild(pre)
+    }
+
+    if(exportAction.value === 'save') {
+        let blob = null
+        let fileName = null
+
+        if(exportType.value.startsWith('csv')) {
+            // BOM support for special characters in Excel
+            const byteOrderMark = '\ufeff'
+
+            blob = new Blob([byteOrderMark, textToExport], {
+                type: 'text/csv;charset=utf-8;'
+            })
+
+            fileName = `${route.params.tableName}.csv`
+        }
+
+        if(exportType.value === 'sql') {
+            blob = new Blob([textToExport], {
+                type: 'application/sql;charset=utf-8;'
+            })
+
+            fileName = `${route.params.tableName}.sql`
+        }
+
+        const link = document.createElement('a')
+
+        link.href = URL.createObjectURL(blob)
+        link.download = fileName
+        link.style.display = 'none'
+        document.body.appendChild(link)
+        link.click()
+
+        document.body.removeChild(link)
+    }
 }
 
 const vTextareaFitContent =  {
