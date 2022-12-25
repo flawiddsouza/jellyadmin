@@ -17,7 +17,14 @@ async function getConnection(connectionId) {
         }
 
         if(connection.type === CONNECTION_TYPES.MYSQL) {
-            sql = await mysql.createConnection(connection.connection_url)
+            sql = await mysql.createConnection({
+                host: connection.host,
+                port: connection.port,
+                user: connection.username,
+                password: connection.password,
+                database: connection.database,
+                dateStrings: true
+            })
         }
 
         connectionCache[connectionId] = {
