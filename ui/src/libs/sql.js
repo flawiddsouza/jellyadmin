@@ -23,12 +23,20 @@ export function wrapColumnName(columnName, type) {
 }
 
 export function wrapColumnValue(columnValue, type) {
+    if(columnValue === null) {
+        return 'NULL'
+    }
+
+    if(typeof columnValue === 'number') {
+        return columnValue
+    }
+
     if(type === 'mysql') {
-        return `'${columnValue}'`
+        return `'${JSON.stringify(columnValue).slice(1, -1).replace(/'/g, "\\'")}'`
     }
 
     if(type === 'postgresql') {
-        return `'${columnValue}'`
+        return `'${JSON.stringify(columnValue).slice(1, -1).replace(/'/g, "''")}'`
     }
 
     return columnValue

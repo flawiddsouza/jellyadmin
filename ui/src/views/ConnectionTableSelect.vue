@@ -124,7 +124,7 @@
                     <tbody>
                         <tr v-for="row in rows" :class="{ 'selected': selectedRowIds.includes(row[primaryColumn].originalText) }">
                             <td>
-                                <input type="checkbox" class="vertical-align-middle" :value="row[primaryColumn].originalText" v-model="selectedRowIds">
+                                <input type="checkbox" class="vertical-align-middle" :value="row[primaryColumn].originalValue" v-model="selectedRowIds">
                             </td>
                             <td v-for="rowHeader in rowHeaders" :class="{ 'white-space-pre': row[rowHeader].type === 'text' && row[rowHeader].text.length > 100 }" @click.ctrl="row[rowHeader].edit = true">
                                 <template v-if="!row[rowHeader].edit">
@@ -423,6 +423,7 @@ async function runQuery(manual=true) {
                     row[column.name] = {
                         type: 'null',
                         originalText: null,
+                        originalValue: row[column.name],
                         inputType: column.type.startsWith('json') ? 'textarea' : 'text',
                         columnType: column.type
                     }
@@ -435,6 +436,7 @@ async function runQuery(manual=true) {
                         type: 'text',
                         text: text.slice(0, 100),
                         originalText: text,
+                        originalValue: row[column.name],
                         inputType: column.type.startsWith('json') ? 'textarea' : 'text',
                         columnType: column.type
                     }
@@ -458,6 +460,7 @@ async function runQuery(manual=true) {
                         to: `/${route.params.connectionId}/${foreignKeyMap[column.name].foreign_table}/select?filters=${btoa(JSON.stringify(filters))}`,
                         text: row[column.name],
                         originalText: row[column.name],
+                        originalValue: row[column.name],
                         inputType: column.type.startsWith('json') ? 'textarea' : 'text',
                         columnType: column.type
                     }
@@ -529,14 +532,14 @@ async function updateRowColumn(row, column, value) {
         let valueToUpdate = value
 
         if(currentConnection.value.type === 'mysql') {
-            valueToUpdate = `'${JSON.stringify(valueToUpdate).slice(1, -1)}'`
+            valueToUpdate = wrapColumnValue(valueToUpdate, currentConnection.value.type)
         }
 
         if(currentConnection.value.type === 'postgresql') {
             if(row[column].columnType === 'jsonb') {
                 valueToUpdate = `'${valueToUpdate.replace(/'/g, "''")}'::jsonb`
             } else {
-                valueToUpdate = `'${JSON.stringify(valueToUpdate).slice(1, -1)}'`
+                valueToUpdate = wrapColumnValue(valueToUpdate, currentConnection.value.type)
             }
         }
 
@@ -554,7 +557,7 @@ async function updateRowColumn(row, column, value) {
 
 function toggleSelectAllRows() {
     if(selectedRowIds.value.length !== rows.value.length) {
-        selectedRowIds.value = rows.value.map(row => row[primaryColumn.value].originalText)
+        selectedRowIds.value = rows.value.map(row => row[primaryColumn.value].originalValue)
     } else {
         selectedRowIds.value = []
     }
@@ -614,7 +617,15 @@ function shouldDisplayPage(page) {
 }
 
 async function exportSelected() {
-    const { data: rowsToExport } = await api.runQuery(route.params.connectionId, generateQuery(false, true))
+    let rowsToExport = []
+
+    if(selectAllRows.value || selectedRowIds.value.length === 0) {
+        const { data } = await api.runQuery(route.params.connectionId, generateQuery(false, true))
+        rowsToExport = data
+    } else {
+        const { data } = await api.runQuery(route.params.connectionId, generateQuery())
+        rowsToExport = data.filter(row => selectedRowIds.value.includes(row[primaryColumn.value]))
+    }
 
     let textToExport = null
 
@@ -625,6 +636,18 @@ async function exportSelected() {
     }
 
     if(exportType.value === 'sql') {
+        let columnsToExport = columns.value.map(column => wrapColumnName(column.name, currentConnection.value.type)).join(', ')
+        textToExport = `INSERT INTO ${wrapColumnName(route.params.tableName, currentConnection.value.type)} (${columnsToExport}) VALUES`
+        rowsToExport.forEach((row, rowIndex) => {
+            textToExport += '\n('
+            textToExport += columns.value.map(column => wrapColumnValue(row[column.name], currentConnection.value.type)).join(',\t')
+            textToExport += ')'
+            if(rowIndex < rowsToExport.length - 1) {
+                textToExport += ','
+            } else {
+                textToExport += ';\n'
+            }
+        })
     }
 
     if(exportAction.value === 'open') {
