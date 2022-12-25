@@ -219,6 +219,7 @@ import * as api from '../libs/api.js'
 import { highlight } from 'sql-highlight'
 import { addQueryParamsToRoute } from '../libs/helpers.js'
 import Papa from 'papaparse'
+import { wrapTableName, wrapColumnName, wrapColumnValue } from '../libs/sql.js'
 
 const route = useRoute()
 const store = useStore()
@@ -285,17 +286,11 @@ function generateQuery(count=false, noLimit=false) {
         if(querySelectTemp.length === 0) {
             queryParts.push('*')
         } else {
-            queryParts.push(querySelectTemp.map(querySelectItem => {
-                if(currentConnection.value.type === 'mysql') {
-                    return `\`${querySelectItem.column}\``
-                }
-
-                if(currentConnection.value.type === 'postgresql') {
-                    return `"${querySelectItem.column}"`
-                }
-
-                return querySelectItem.column
-            }).join(', '))
+            queryParts.push(
+                querySelectTemp
+                .map(querySelectItem => wrapColumnName(querySelectItem.column, currentConnection.value.type))
+                .join(', ')
+            )
         }
     } else {
         queryParts.push('COUNT(*) as count')
@@ -303,15 +298,7 @@ function generateQuery(count=false, noLimit=false) {
 
     queryParts.push('FROM')
 
-    let tableName = route.params.tableName
-
-    if(currentConnection.value.type === 'mysql') {
-        tableName = `\`${route.params.tableName}\``
-    }
-
-    if(currentConnection.value.type === 'postgresql') {
-        tableName = `"${route.params.tableName}"`
-    }
+    const tableName = wrapTableName(route.params.tableName, currentConnection.value.type)
 
     queryParts.push(tableName)
 
@@ -324,25 +311,9 @@ function generateQuery(count=false, noLimit=false) {
             queryParts.push('AND')
         }
 
-        let column = querySearchItem.column
+        const column = wrapColumnName(querySearchItem.column, currentConnection.value.type)
 
-        if(currentConnection.value.type === 'mysql') {
-            column = `\`${column}\``
-        }
-
-        if(currentConnection.value.type === 'postgresql') {
-            column = `"${column}"`
-        }
-
-        let value = querySearchItem.value
-
-        if(currentConnection.value.type === 'mysql') {
-            value = `'${value}'`
-        }
-
-        if(currentConnection.value.type === 'postgresql') {
-            value = `'${value}'`
-        }
+        const value = wrapColumnValue(querySearchItem.value, currentConnection.value.type)
 
         queryParts.push(`${column} ${querySearchItem.operator} ${value}`)
     })
@@ -356,15 +327,7 @@ function generateQuery(count=false, noLimit=false) {
             queryParts.push(',')
         }
 
-        let column = querySortItem.column
-
-        if(currentConnection.value.type === 'mysql') {
-            column = `\`${column}\``
-        }
-
-        if(currentConnection.value.type === 'postgresql') {
-            column = `"${column}"`
-        }
+        let column = wrapColumnName(querySortItem.column, currentConnection.value.type)
 
         queryParts.push(`${column}${querySortItem.descending ? ' DESC' : ''}`)
     })
@@ -545,35 +508,11 @@ async function updateRowColumn(row, column, value) {
         row[column]['originalText'] = value
         row[column]['text'] = value.slice(0, 100)
 
-        let tableName = route.params.tableName
+        const tableName = wrapTableName(route.params.tableName, currentConnection.value.type)
 
-        if(currentConnection.value.type === 'mysql') {
-            tableName = `\`${route.params.tableName}\``
-        }
+        const columnName = wrapColumnName(column, currentConnection.value.type)
 
-        if(currentConnection.value.type === 'postgresql') {
-            tableName = `"${route.params.tableName}"`
-        }
-
-        let columnName = column
-
-        if(currentConnection.value.type === 'mysql') {
-            columnName = `\`${columnName}\``
-        }
-
-        if(currentConnection.value.type === 'postgresql') {
-            columnName = `"${columnName}"`
-        }
-
-        let primaryColumnWrapped = primaryColumn.value
-
-        if(currentConnection.value.type === 'mysql') {
-            primaryColumnWrapped = `\`${primaryColumnWrapped}\``
-        }
-
-        if(currentConnection.value.type === 'postgresql') {
-            primaryColumnWrapped = `"${primaryColumnWrapped}"`
-        }
+        const primaryColumnWrapped = wrapColumnName(primaryColumn.value, currentConnection.value.type)
 
         let valueToUpdate = value
 
@@ -589,15 +528,7 @@ async function updateRowColumn(row, column, value) {
             }
         }
 
-        let primaryColumnValue = row[primaryColumn.value].text
-
-        if(currentConnection.value.type === 'mysql') {
-            primaryColumnValue = `'${primaryColumnValue}'`
-        }
-
-        if(currentConnection.value.type === 'postgresql') {
-            primaryColumnValue = `'${primaryColumnValue}'`
-        }
+        const primaryColumnValue =  wrapColumnValue(row[primaryColumn.value].text, currentConnection.value.type)
 
         error.value = ''
 
