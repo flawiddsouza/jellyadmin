@@ -14,7 +14,7 @@
         "dev-ui": "cd ui && npm run dev",
         "dev": "npx concurrently npm:dev-api npm:dev-ui",
         "generate-bundle": "npx rollup app.js -f cjs -o bundle.js",
-        "build-linux": "rm -rf out && npm run generate-bundle && npx pkg bundle.js --config package.json -o out/jellyadmin-linux && cd out && gzip -c jellyadmin-linux > jellyadmin-linux.gz && cd .. && echo && rm bundle.js && ls -lh --color=auto out"
+        "build-linux": "cd ui && npm ci && npm run build && cd .. && rm -rf out && npm run generate-bundle && npx pkg bundle.js --config package.json -o out/jellyadmin-linux && cd out && gzip -c jellyadmin-linux > jellyadmin-linux.gz && cd .. && echo && rm bundle.js && ls -lh --color=auto out"
     },
     "devDependencies": {
         "rollup": "^3.7.5"
