@@ -24,11 +24,11 @@ export function wrapColumnName(columnName, type) {
 
 export function wrapColumnValue(columnValue, type) {
     if(type === 'mysql') {
-        return `'${value}'`
+        return `'${columnValue}'`
     }
 
     if(type === 'postgresql') {
-        return `'${value}'`
+        return `'${columnValue}'`
     }
 
     return columnValue

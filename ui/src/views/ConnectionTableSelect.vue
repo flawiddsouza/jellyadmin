@@ -259,6 +259,7 @@ const totalPages = ref(1)
 const currentPage = ref(1)
 const exportAction = ref('save')
 const exportType = ref('sql')
+const hidePrimaryColumnFromTable = ref(false)
 
 async function getConnectionTable() {
     const { data: table } = await api.getConnectionTable(route.params.connectionId, route.params.tableName)
@@ -291,6 +292,14 @@ function generateQuery(count=false, noLimit=false) {
                 .map(querySelectItem => wrapColumnName(querySelectItem.column, currentConnection.value.type))
                 .join(', ')
             )
+
+            // append primary key to query if it's missing from the select, as it's required for a lot of operations
+            if(querySelectTemp.some(querySelectItem => querySelectItem.column === primaryColumn.value) === false) {
+                queryParts.push(`, ${wrapColumnName(primaryColumn.value, currentConnection.value.type)}`)
+                hidePrimaryColumnFromTable.value = true
+            } else {
+                hidePrimaryColumnFromTable.value = false
+            }
         }
     } else {
         queryParts.push('COUNT(*) as count')
@@ -390,6 +399,9 @@ async function runQuery(manual=true) {
     if(success) {
         rows.value = data
         rowHeaders.value = rows.value.length > 0 ? Object.keys(rows.value[0]) : []
+        if(hidePrimaryColumnFromTable.value) {
+            rowHeaders.value = rowHeaders.value.filter(rowHeader => rowHeader !== primaryColumn.value)
+        }
 
         const { data: totalRowsData } = await api.runQuery(route.params.connectionId, generateQuery(true))
         totalRows.value = totalRowsData[0].count
