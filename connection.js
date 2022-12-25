@@ -12,7 +12,15 @@ async function getConnection(connectionId) {
 
         if(connection.type === CONNECTION_TYPES.POSTGRESQL) {
             sql = postgres(connection.connection_url, {
-                connect_timeout: 5
+                connect_timeout: 5,
+                types: {
+                    date: {
+                        to: 1184,
+                        from: [1082, 1083, 1114, 1184],
+                        serialize: (date) => date,
+                        parse: (date) => date
+                    }
+                }
             })
         }
 
