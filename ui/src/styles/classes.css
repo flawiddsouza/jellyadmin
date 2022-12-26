@@ -78,3 +78,7 @@ table.hover tbody > tr:hover {
 table tbody > tr.selected, table tbody > tr.selected:hover {
     background: #ddf;
 }
+
+a:hover.no-text-decoration {
+    text-decoration: none;
+}

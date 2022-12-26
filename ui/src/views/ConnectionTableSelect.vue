@@ -118,7 +118,23 @@
                             <th>
                                 <input type="checkbox" class="vertical-align-middle" :checked="selectedRowIds.length === rows.length" @click="toggleSelectAllRows">
                             </th>
-                            <th v-for="rowHeader in rowHeaders">{{ rowHeader }}</th>
+                            <th v-for="rowHeader in rowHeaders" class="column-header">
+                                <a
+                                    :href="generateColumnHeaderSortUrl(rowHeader, false)"
+                                    @click.prevent="handleColumnHeaderSortClick(rowHeader, false)"
+                                >
+                                    <span>{{ rowHeader }}</span>
+                                </a>
+                                <span class="column">
+                                    <a
+                                        :href="generateColumnHeaderSortUrl(rowHeader, true)"
+                                        @click.prevent="handleColumnHeaderSortClick(rowHeader, true)"
+                                        title="descending"
+                                        class="no-text-decoration"
+                                    >&nbsp;↓</a>
+                                    <a href="#" title="Search" class="no-text-decoration">&nbsp;=</a>
+                                </span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -694,6 +710,37 @@ async function exportSelected() {
     }
 }
 
+function generateColumnHeaderSortFilter(columnName, descending) {
+    const existingSort = querySort.value.find(querySortItem => querySortItem.column === columnName)
+
+    if(existingSort && !existingSort.descending) {
+        descending = true
+    }
+
+    return [
+        {
+            column: columnName,
+            descending
+        }
+    ]
+}
+
+function generateColumnHeaderSortUrl(columnName, descending) {
+    const filters = {
+        select: querySelect.value,
+        search: querySearch.value,
+        sort: generateColumnHeaderSortFilter(columnName, descending),
+        limit: queryLimit.value
+    }
+
+    return `/${route.params.connectionId}/${route.params.tableName}/select?filters=${btoa(JSON.stringify(filters))}`
+}
+
+function handleColumnHeaderSortClick(columnName, descending) {
+    querySort.value = generateColumnHeaderSortFilter(columnName, descending)
+    runQuery()
+}
+
 const vTextareaFitContent =  {
     mounted(element) {
         element.style.height = element.scrollHeight + 'px'
@@ -732,3 +779,21 @@ onBeforeMount(async() => {
     await runQuery(false)
 })
 </script>
+
+<style scoped>
+.column {
+    display: none;
+    position: absolute;
+    background: #ddf;
+    padding: 0.27em 1ex 0.3em 0;
+    margin-top: -0.27em;
+}
+
+.column-header:hover {
+    z-index: 1;
+}
+
+.column-header:hover .column, .column:hover {
+    display: inline;
+}
+</style>
