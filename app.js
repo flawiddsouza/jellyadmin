@@ -91,10 +91,22 @@ apiRouter.get('/connection/:connection_id', async(req, res) => {
         return
     }
 
+    let databases = {}
+
+    try {
+        databases.data = await connection.getDatabases(req.params.connection_id)
+        databases.success = true
+    } catch(e) {
+        databases.data = e.message
+        databases.success = false
+    }
+
     try {
         const tables = await connection.getTables(req.params.connection_id)
+
         res.send({
             details,
+            databases,
             tables: {
                 success: true,
                 data: tables
@@ -103,6 +115,7 @@ apiRouter.get('/connection/:connection_id', async(req, res) => {
     } catch(e) {
         res.send({
             details,
+            databases,
             tables: {
                 success: false,
                 data: e.message === 'write CONNECT_TIMEOUT undefined:undefined' ? 'Unable to establish connection with database' : e.message

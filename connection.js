@@ -44,6 +44,36 @@ async function getConnection(connectionId) {
     return connectionCache[connectionId]
 }
 
+export async function getDatabases(connectionId) {
+    try {
+        const { connection, sql } = await getConnection(connectionId)
+
+        let rows = []
+
+        if(connection.type === CONNECTION_TYPES.POSTGRESQL) {
+            rows = await sql`
+                SELECT datname as database FROM pg_database
+                WHERE datistemplate = false
+            `
+        }
+
+        if(connection.type === CONNECTION_TYPES.MYSQL) {
+            [ rows ] = await sql.execute(`
+                SHOW DATABASES
+            `)
+
+            rows = rows.map(row => ({
+                database: row.Database
+            }))
+        }
+
+        return rows
+    } catch(e) {
+        console.error(e)
+        throw new Error(e.message)
+    }
+}
+
 export async function getTables(connectionId) {
     try {
         const { connection, sql } = await getConnection(connectionId)
