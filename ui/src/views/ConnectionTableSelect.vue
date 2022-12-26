@@ -167,7 +167,7 @@
             </div>
         </template>
 
-        <footer>
+        <footer v-show="rows.length > 0">
             <fieldset v-if="totalRows > rows.length">
                 <legend>Page</legend>
                 <template v-for="page in totalPages">
