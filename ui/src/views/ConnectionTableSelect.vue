@@ -7,7 +7,7 @@
             <router-link :to="`/${route.params.connectionId}/${route.params.tableName}/structure`" class="ml-2">Show structure</router-link>
         </div>
 
-        <form @submit.prevent="runQuery(true)" class="mt-1 overflow-auto">
+        <form @submit.prevent="currentPage = 1; runQuery(true)" class="mt-1 overflow-auto">
             <fieldset>
                 <legend><a href="#fieldset-select">Select</a></legend>
                 <div>
