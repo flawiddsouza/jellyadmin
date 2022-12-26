@@ -6,6 +6,14 @@
     margin-top: 1rem;
 }
 
+.ml-0_25 {
+    margin-left: 0.125rem;
+}
+
+.ml-0_5 {
+    margin-left: 0.25rem;
+}
+
 .ml-1 {
     margin-left: 0.5rem;
 }
