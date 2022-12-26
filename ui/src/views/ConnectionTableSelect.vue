@@ -422,7 +422,7 @@ async function runQuery(manual=true) {
         const { data: totalRowsData } = await api.runQuery(route.params.connectionId, generateQuery(true))
         totalRows.value = totalRowsData[0].count
 
-        totalPages.value = Math.ceil(totalRows.value / queryLimit.value)
+        totalPages.value = queryLimit.value > 0 ? Math.ceil(totalRows.value / queryLimit.value) : 1
 
         const foreignKeyMap = foreignKeys.value.reduce((prev, curr) => {
             prev[curr.column] = curr
