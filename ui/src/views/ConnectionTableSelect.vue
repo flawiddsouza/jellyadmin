@@ -352,17 +352,19 @@ function generateQuery(count=false, noLimit=false) {
 
     const querySortTemp = querySort.value.filter(querySortItem => querySortItem.column.trim())
 
-    querySortTemp.forEach((querySortItem, querySortItemIndex) => {
-        if(querySortItemIndex === 0) {
-            queryParts.push('ORDER BY')
-        } else {
-            queryParts.push(',')
-        }
+    if(!count) {
+        querySortTemp.forEach((querySortItem, querySortItemIndex) => {
+            if(querySortItemIndex === 0) {
+                queryParts.push('ORDER BY')
+            } else {
+                queryParts.push(',')
+            }
 
-        let column = wrapColumnName(querySortItem.column, currentConnection.value.type)
+            let column = wrapColumnName(querySortItem.column, currentConnection.value.type)
 
-        queryParts.push(`${column}${querySortItem.descending ? ' DESC' : ''}`)
-    })
+            queryParts.push(`${column}${querySortItem.descending ? ' DESC' : ''}`)
+        })
+    }
 
     if(!count && !noLimit) {
         if(queryLimit.value !== '') {
