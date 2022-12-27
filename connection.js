@@ -134,7 +134,7 @@ export async function getTableDetails(connectionId, database, tableName) {
                     column_default as default,
                     false as primary_column,
                     false as auto_increment,
-                    pg_catalog.col_description(format('%s.%s', table_schema, table_name)::regclass::oid, ordinal_position) as comment
+                    pg_catalog.col_description(format('"%s"."%s"', table_schema, table_name)::regclass::oid, ordinal_position) as comment
                 FROM
                     information_schema.columns
                 WHERE

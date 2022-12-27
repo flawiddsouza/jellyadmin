@@ -303,6 +303,9 @@ async function getConnectionTable() {
         const matches = regex.exec(primaryColumn.value)
         if(matches.length === 2) {
             primaryColumn.value  = matches[1]
+            if(primaryColumn.value.startsWith('"') && primaryColumn.value.endsWith('"')) {
+                primaryColumn.value = primaryColumn.value.slice(1, -1)
+            }
         }
     }
 }
