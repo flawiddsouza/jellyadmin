@@ -1,8 +1,13 @@
 <template>
     <nav>
-        <router-link to="/" @click="currentConnection = null">JellyAdmin</router-link>
-        <span v-if="currentConnection"> » <router-link :to="`/${currentConnection.id}`">{{ currentConnection.name }}</router-link> » Database: {{ currentConnection.database }}</span>
-        <span v-if="$route.params.tableName"> » {{ getIfSelectOrTable($route) }}: {{ $route.params.tableName }}</span>
+        <router-link to="/" exact-active-class="active" @click="currentConnection = null">JellyAdmin</router-link>
+        <span v-if="currentConnection">
+             » <router-link :to="`/${currentConnection.id}`" :class="{ active: route.query.db === undefined && route.query.table === undefined }">{{ currentConnection.name }}</router-link>
+            <template v-if="route.query.db">
+                » Database: <router-link :to="`/${currentConnection.id}?db=${route.query.db}`" :class="{ active: route.query.db !== undefined && route.query.table === undefined }">{{ route.query.db }}</router-link>
+                <span v-if="$route.query.table"> » {{ getIfSelectOrTable() }}: {{ $route.query.table }}</span>
+            </template>
+        </span>
     </nav>
     <main>
         <router-view></router-view>
@@ -10,18 +15,20 @@
 </template>
 
 <script setup>
+import { useRoute } from 'vue-router'
 import { useStore } from '../store'
 import { storeToRefs } from 'pinia'
 
+const route = useRoute()
 const store = useStore()
 const { currentConnection } = storeToRefs(store)
 
-function getIfSelectOrTable(route) {
-    if(route.path.endsWith(`${route.params.tableName}/select`)) {
+function getIfSelectOrTable() {
+    if(route.query.action === 'select') {
         return 'Select'
     }
 
-    if(route.path.endsWith(`${route.params.tableName}/structure`)) {
+    if(route.query.action === 'structure') {
         return 'Table'
     }
 }

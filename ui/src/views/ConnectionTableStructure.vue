@@ -1,9 +1,16 @@
 <template>
-    <h2>Table: {{ route.params.tableName }}</h2>
+    <h2>Table: {{ route.query.table }}</h2>
 
     <div>
-        <router-link :to="`/${route.params.connectionId}/${route.params.tableName}/select`">Select data</router-link>
-        <router-link :to="`/${route.params.connectionId}/${route.params.tableName}/structure`" class="ml-2">Show structure</router-link>
+        <router-link
+            :to="`/${route.params.connectionId}?db=${route.query.db}&table=${route.query.table}&action=select`"
+            :class="{ active: route.query.db !== undefined && route.query.action === 'select' }"
+        >Select data</router-link>
+        <router-link
+            :to="`/${route.params.connectionId}?db=${route.query.db}&table=${route.query.table}&action=structure`"
+            class="ml-2"
+            :class="{ active: route.query.db !== undefined && route.query.action === 'structure' }"
+        >Show structure</router-link>
     </div>
 
     <table class="mt-2">
@@ -63,7 +70,7 @@
             <tbody>
                 <tr v-for="foreignKey in foreignKeys">
                     <th>{{ foreignKey.column }}</th>
-                    <td><router-link :to="`/${route.params.connectionId}/${foreignKey.foreign_table}/structure`">{{ foreignKey.foreign_table }}</router-link>({{ foreignKey.foreign_column }})</td>
+                    <td><router-link :to="`/${route.params.connectionId}?db=${route.query.db}&table=${foreignKey.foreign_table}&action=structure`">{{ foreignKey.foreign_table }}</router-link>({{ foreignKey.foreign_column }})</td>
                     <td>{{ foreignKey.name }}</td>
                 </tr>
             </tbody>
@@ -82,7 +89,7 @@ const indexes = ref([])
 const foreignKeys = ref([])
 
 async function getConnectionTable() {
-    const { data: table } = await api.getConnectionTable(route.params.connectionId, route.params.tableName)
+    const { data: table } = await api.getConnectionTable(route.params.connectionId, route.query.table)
     columns.value = table.columns
     indexes.value = table.indexes
     foreignKeys.value = table.foreignKeys

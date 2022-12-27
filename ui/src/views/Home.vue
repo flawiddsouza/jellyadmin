@@ -3,7 +3,7 @@
         <div class="bold">Available Connections</div>
         <ul class="mt-1">
             <li v-for="(connection, connectionIndex) in connections">
-                <router-link :to="`/${connection.id}`">{{ connection.name }} » {{ connection.database }}</router-link>
+                <router-link :to="`/${connection.id}?db=${connection.database}`">{{ connection.name }} » {{ connection.database }}</router-link>
                 <button class="no-border no-padding no-background cursor-pointer vertical-align-middle ml-1" @click="editConnections[connection.id] = !editConnections[connection.id]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-edit" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>

@@ -1,13 +1,18 @@
 export function addQueryParamsToRoute(route, params) {
+    const newParams = {
+        ...route.query,
+        ...params
+    }
+
     window.history.pushState(
       {},
       null,
       route.path +
         '?' +
-        Object.keys(params)
+        Object.keys(newParams)
         .map(key => {
             return (
-                encodeURIComponent(key) + '=' + encodeURIComponent(params[key])
+                encodeURIComponent(key) + '=' + encodeURIComponent(newParams[key])
             )
         })
         .join('&')

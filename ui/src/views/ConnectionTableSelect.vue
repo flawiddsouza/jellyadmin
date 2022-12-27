@@ -1,10 +1,17 @@
 <template>
     <div class="grid full-height" style="grid-template-rows: auto auto auto auto auto 1fr">
-        <h2>Select: {{ route.params.tableName }}</h2>
+        <h2>Select: {{ route.query.table }}</h2>
 
         <div>
-            <router-link :to="`/${route.params.connectionId}/${route.params.tableName}/select`">Select data</router-link>
-            <router-link :to="`/${route.params.connectionId}/${route.params.tableName}/structure`" class="ml-2">Show structure</router-link>
+            <router-link
+                :to="`/${route.params.connectionId}?db=${route.query.db}&table=${route.query.table}&action=select`"
+                :class="{ active: route.query.db !== undefined && route.query.action === 'select' }"
+            >Select data</router-link>
+            <router-link
+                :to="`/${route.params.connectionId}?db=${route.query.db}&table=${route.query.table}&action=structure`"
+                class="ml-2"
+                :class="{ active: route.query.db !== undefined && route.query.action === 'structure' }"
+            >Show structure</router-link>
         </div>
 
         <form @submit.prevent="currentPage = 1; runQuery(true)" class="mt-1 overflow-auto">
@@ -278,7 +285,7 @@ const exportType = ref('sql')
 const hidePrimaryColumnFromTable = ref(false)
 
 async function getConnectionTable() {
-    const { data: table } = await api.getConnectionTable(route.params.connectionId, route.params.tableName)
+    const { data: table } = await api.getConnectionTable(route.params.connectionId, route.query.table)
     columns.value = table.columns
     indexes.value = table.indexes
     foreignKeys.value = table.foreignKeys
@@ -323,7 +330,7 @@ function generateQuery(count=false, noLimit=false) {
 
     queryParts.push('FROM')
 
-    const tableName = wrapTableName(route.params.tableName, currentConnection.value.type)
+    const tableName = wrapTableName(route.query.table, currentConnection.value.type)
 
     queryParts.push(tableName)
 
@@ -473,7 +480,7 @@ async function runQuery(manual=true) {
                     }
                     row[column.name] = {
                         type: 'router-link',
-                        to: `/${route.params.connectionId}/${foreignKeyMap[column.name].foreign_table}/select?filters=${btoa(JSON.stringify(filters))}`,
+                        to: `/${route.params.connectionId}?db=${route.query.db}&table=${foreignKeyMap[column.name].foreign_table}&action=select&filters=${btoa(JSON.stringify(filters))}`,
                         text: row[column.name],
                         originalText: row[column.name],
                         originalValue: row[column.name],
@@ -492,7 +499,7 @@ async function runQuery(manual=true) {
 }
 
 function getGeneratedQueryEditRoute() {
-    return `/${route.params.connectionId}/query?sql=${encodeURIComponent(generatedQuery.value)}`
+    return `/${route.params.connectionId}?db=${route.query.db}&action=query&sql=${encodeURIComponent(generatedQuery.value)}`
 }
 
 function highlightSql(sql) {
@@ -539,7 +546,7 @@ async function updateRowColumn(row, column, value) {
         row[column]['originalText'] = value
         row[column]['text'] = value.slice(0, 100)
 
-        const tableName = wrapTableName(route.params.tableName, currentConnection.value.type)
+        const tableName = wrapTableName(route.query.table, currentConnection.value.type)
 
         const columnName = wrapColumnName(column, currentConnection.value.type)
 
@@ -653,7 +660,7 @@ async function exportSelected() {
 
     if(exportType.value === 'sql') {
         let columnsToExport = columns.value.map(column => wrapColumnName(column.name, currentConnection.value.type)).join(', ')
-        textToExport = `INSERT INTO ${wrapColumnName(route.params.tableName, currentConnection.value.type)} (${columnsToExport}) VALUES`
+        textToExport = `INSERT INTO ${wrapColumnName(route.query.table, currentConnection.value.type)} (${columnsToExport}) VALUES`
         rowsToExport.forEach((row, rowIndex) => {
             textToExport += '\n('
             textToExport += columns.value.map(column => wrapColumnValue(row[column.name], currentConnection.value.type)).join(',\t')
@@ -687,7 +694,7 @@ async function exportSelected() {
                 type: 'text/csv;charset=utf-8;'
             })
 
-            fileName = `${route.params.tableName}.csv`
+            fileName = `${route.query.table}.csv`
         }
 
         if(exportType.value === 'sql') {
@@ -695,7 +702,7 @@ async function exportSelected() {
                 type: 'application/sql;charset=utf-8;'
             })
 
-            fileName = `${route.params.tableName}.sql`
+            fileName = `${route.query.table}.sql`
         }
 
         const link = document.createElement('a')
@@ -733,7 +740,7 @@ function generateColumnHeaderSortUrl(columnName, descending) {
         limit: queryLimit.value
     }
 
-    return `/${route.params.connectionId}/${route.params.tableName}/select?filters=${btoa(JSON.stringify(filters))}`
+    return `/${route.params.connectionId}?db=${route.query.db}&table=${route.query.table}&action=select&filters=${btoa(JSON.stringify(filters))}`
 }
 
 function handleColumnHeaderSortClick(columnName, descending) {
