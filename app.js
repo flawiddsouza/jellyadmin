@@ -85,7 +85,7 @@ apiRouter.get('/connection/:connection_id', async(req, res) => {
     let details = null
 
     try {
-        details = db.getConnection(req.params.connection_id)
+        details = db.getConnection(req.params.connection_id, req.query.database)
     } catch(e) {
         res.status(400).send(e.message)
         return
@@ -94,7 +94,7 @@ apiRouter.get('/connection/:connection_id', async(req, res) => {
     let databases = {}
 
     try {
-        databases.data = await connection.getDatabases(req.params.connection_id)
+        databases.data = await connection.getDatabases(req.params.connection_id, req.query.database)
         databases.success = true
     } catch(e) {
         databases.data = e.message
@@ -102,7 +102,7 @@ apiRouter.get('/connection/:connection_id', async(req, res) => {
     }
 
     try {
-        const tables = await connection.getTables(req.params.connection_id)
+        const tables = await connection.getTables(req.params.connection_id, req.query.database)
 
         res.send({
             details,
@@ -178,7 +178,7 @@ apiRouter.delete('/connection/:connection_id', async(req, res) => {
 
 apiRouter.get('/connection/:connection_id/:table_name', async(req, res) => {
     try {
-        const tableDetails = await connection.getTableDetails(req.params.connection_id, req.params.table_name)
+        const tableDetails = await connection.getTableDetails(req.params.connection_id, req.query.database, req.params.table_name)
         res.send(tableDetails)
     } catch(e) {
         res.status(400).send(e.message)
@@ -187,7 +187,7 @@ apiRouter.get('/connection/:connection_id/:table_name', async(req, res) => {
 
 apiRouter.post('/connection/:connection_id/query', async(req, res) => {
     try {
-        const result = await connection.runQuery(req.params.connection_id, req.body.query)
+        const result = await connection.runQuery(req.params.connection_id, req.query.database, req.body.query)
         res.send(result)
     } catch(e) {
         res.status(400).send(e.message)

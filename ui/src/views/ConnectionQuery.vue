@@ -52,7 +52,7 @@ async function runQuery() {
     const queriesToRun = query.value.split(';').filter(item => item)
 
     const result = await Promise.all(queriesToRun.map(queryToRun => {
-        return api.runQuery(route.params.connectionId, queryToRun)
+        return api.runQuery(route.params.connectionId, route.query.db, queryToRun)
     }))
 
     result.forEach(resultItem => {

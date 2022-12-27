@@ -43,12 +43,12 @@ export function addConnection(name, type, host, port, username, password, databa
     return getConnection(result.lastInsertRowid)
 }
 
-export function getConnection(connectionId) {
+export function getConnection(connectionId, database) {
     const connection = db.prepare('SELECT * FROM connections WHERE id = ?').get(connectionId)
     if(!connection) {
         throw new Error('Given connection id does not exist')
     }
-    connection.connection_url = `${connection.type}://${connection.username}:${connection.password}@${connection.host}:${connection.port}/${connection.database}`
+    connection.connection_url = `${connection.type}://${connection.username}:${connection.password}@${connection.host}:${connection.port}/${database !== 'undefined' ? database : connection.database}`
     return connection
 }
 

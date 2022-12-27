@@ -89,7 +89,7 @@ const indexes = ref([])
 const foreignKeys = ref([])
 
 async function getConnectionTable() {
-    const { data: table } = await api.getConnectionTable(route.params.connectionId, route.query.table)
+    const { data: table } = await api.getConnectionTable(route.params.connectionId, route.query.db, route.query.table)
     columns.value = table.columns
     indexes.value = table.indexes
     foreignKeys.value = table.foreignKeys

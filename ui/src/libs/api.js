@@ -12,16 +12,16 @@ export async function addConnection(connection) {
     return http.post('/api/connection', connection)
 }
 
-export async function getConnection(connectionId, abortControllerSignal) {
-    return http.get(`/api/connection/${connectionId}`, abortControllerSignal)
+export async function getConnection(connectionId, database, abortControllerSignal) {
+    return http.get(`/api/connection/${connectionId}?database=${database}`, abortControllerSignal)
 }
 
-export async function getConnectionTable(connectionId, tableName) {
-    return http.get(`/api/connection/${connectionId}/${tableName}`)
+export async function getConnectionTable(connectionId, database, tableName) {
+    return http.get(`/api/connection/${connectionId}/${tableName}?database=${database}`)
 }
 
-export async function runQuery(connectionId, query) {
-    return http.post(`/api/connection/${connectionId}/query`, { query })
+export async function runQuery(connectionId, database, query) {
+    return http.post(`/api/connection/${connectionId}/query?database=${database}`, { query })
 }
 
 export async function updateConnection(connection) {

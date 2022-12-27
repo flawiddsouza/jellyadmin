@@ -5,9 +5,15 @@ import { CONNECTION_TYPES } from './constants.js'
 
 let connectionCache = {}
 
-async function getConnection(connectionId) {
-    if(connectionId in connectionCache === false) {
-        const connection = db.getConnection(connectionId)
+async function getConnection(connectionId, database) {
+    if(database === undefined) {
+        throw new Error('database is a mandatory parameter for getConnection')
+    }
+
+    const key = `${connectionId}-${database}`
+
+    if(key in connectionCache === false) {
+        const connection = db.getConnection(connectionId, database)
         let sql = null
 
         if(connection.type === CONNECTION_TYPES.POSTGRESQL) {
@@ -30,23 +36,23 @@ async function getConnection(connectionId) {
                 port: connection.port,
                 user: connection.username,
                 password: connection.password,
-                database: connection.database,
+                database: database !== 'undefined' ? database : connection.database,
                 dateStrings: true
             })
         }
 
-        connectionCache[connectionId] = {
+        connectionCache[key] = {
             connection,
             sql
         }
     }
 
-    return connectionCache[connectionId]
+    return connectionCache[key]
 }
 
-export async function getDatabases(connectionId) {
+export async function getDatabases(connectionId, database) {
     try {
-        const { connection, sql } = await getConnection(connectionId)
+        const { connection, sql } = await getConnection(connectionId, database)
 
         let rows = []
 
@@ -74,9 +80,9 @@ export async function getDatabases(connectionId) {
     }
 }
 
-export async function getTables(connectionId) {
+export async function getTables(connectionId, database) {
     try {
-        const { connection, sql } = await getConnection(connectionId)
+        const { connection, sql } = await getConnection(connectionId, database)
 
         let rows = []
 
@@ -99,7 +105,7 @@ export async function getTables(connectionId) {
                 FROM
                     information_schema.tables
                 WHERE
-                    table_schema = '${connection.database}'
+                    table_schema = '${database}'
                 ORDER BY table_name
             `)
         }
@@ -111,9 +117,9 @@ export async function getTables(connectionId) {
     }
 }
 
-export async function getTableDetails(connectionId, tableName) {
+export async function getTableDetails(connectionId, database, tableName) {
     try {
-        const { connection, sql } = await getConnection(connectionId)
+        const { connection, sql } = await getConnection(connectionId, database)
 
         let columns = []
         let indexes = []
@@ -172,7 +178,7 @@ export async function getTableDetails(connectionId, tableName) {
                 FROM
                     information_schema.columns
                 WHERE
-                    table_schema = '${connection.database}' AND table_name = '${tableName}'
+                    table_schema = '${database}' AND table_name = '${tableName}'
                 ORDER BY ordinal_position
             `)
 
@@ -210,7 +216,7 @@ export async function getTableDetails(connectionId, tableName) {
                     REFERENCED_COLUMN_NAME as foreign_column
                 FROM information_schema.KEY_COLUMN_USAGE
                 WHERE
-                    TABLE_SCHEMA = "${connection.database}" AND TABLE_NAME = "${tableName}" AND REFERENCED_COLUMN_NAME IS NOT NULL
+                    TABLE_SCHEMA = "${database}" AND TABLE_NAME = "${tableName}" AND REFERENCED_COLUMN_NAME IS NOT NULL
             `)
 
             foreignKeys = result3[0]
@@ -227,9 +233,9 @@ export async function getTableDetails(connectionId, tableName) {
     }
 }
 
-export async function runQuery(connectionId, query) {
+export async function runQuery(connectionId, database, query) {
     try {
-        const { connection, sql } = await getConnection(connectionId)
+        const { connection, sql } = await getConnection(connectionId, database)
 
         let rows = []
 

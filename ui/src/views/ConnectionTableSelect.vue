@@ -285,7 +285,7 @@ const exportType = ref('sql')
 const hidePrimaryColumnFromTable = ref(false)
 
 async function getConnectionTable() {
-    const { data: table } = await api.getConnectionTable(route.params.connectionId, route.query.table)
+    const { data: table } = await api.getConnectionTable(route.params.connectionId, route.query.db, route.query.table)
     columns.value = table.columns
     indexes.value = table.indexes
     foreignKeys.value = table.foreignKeys
@@ -419,7 +419,7 @@ async function runQuery(manual=true) {
         })
     }
 
-    const { success, data } = await api.runQuery(route.params.connectionId, generatedQuery.value)
+    const { success, data } = await api.runQuery(route.params.connectionId, route.query.db, generatedQuery.value)
 
     if(success) {
         rows.value = data
@@ -428,7 +428,7 @@ async function runQuery(manual=true) {
             rowHeaders.value = rowHeaders.value.filter(rowHeader => rowHeader !== primaryColumn.value)
         }
 
-        const { data: totalRowsData } = await api.runQuery(route.params.connectionId, generateQuery(true))
+        const { data: totalRowsData } = await api.runQuery(route.params.connectionId, route.query.db, generateQuery(true))
         totalRows.value = totalRowsData[0].count
 
         totalPages.value = queryLimit.value > 0 ? Math.ceil(totalRows.value / queryLimit.value) : 1
@@ -572,7 +572,7 @@ async function updateRowColumn(row, column, value) {
 
         error.value = ''
 
-        const { success, data } = await api.runQuery(route.params.connectionId, `UPDATE ${tableName} SET ${columnName} = ${valueToUpdate} WHERE ${primaryColumnWrapped} = ${primaryColumnValue}`)
+        const { success, data } = await api.runQuery(route.params.connectionId, route.query.db, `UPDATE ${tableName} SET ${columnName} = ${valueToUpdate} WHERE ${primaryColumnWrapped} = ${primaryColumnValue}`)
 
         if(!success) {
             error.value = data
@@ -645,10 +645,10 @@ async function exportSelected() {
     let rowsToExport = []
 
     if(selectAllRows.value || selectedRowIds.value.length === 0) {
-        const { data } = await api.runQuery(route.params.connectionId, generateQuery(false, true))
+        const { data } = await api.runQuery(route.params.connectionId, route.query.db, generateQuery(false, true))
         rowsToExport = data
     } else {
-        const { data } = await api.runQuery(route.params.connectionId, generateQuery())
+        const { data } = await api.runQuery(route.params.connectionId, route.query.db, generateQuery())
         rowsToExport = data.filter(row => selectedRowIds.value.includes(row[primaryColumn.value]))
     }
 

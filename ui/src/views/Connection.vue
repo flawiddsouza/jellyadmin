@@ -28,6 +28,7 @@
                             >{{ table.table_name }}</router-link>
                         </li>
                     </ul>
+                    <div v-if="tables.length === 0">No tables found</div>
                 </aside>
                 <section class="overflow-auto ml-2">
                     <component :is="activeView" :key="$route.fullPath" />
@@ -61,9 +62,18 @@ const error = ref('')
 const abortController = new AbortController()
 const showDatabaseList = ref(false)
 const activeView = ref(null)
+const lastConnectedDatabase = ref(null)
 
 async function getConnection() {
-    const { success, data } = await api.getConnection(route.params.connectionId, abortController.signal)
+    if(lastConnectedDatabase.value === route.query.db) {
+        return
+    }
+
+    connectionLoaded.value = false
+
+    lastConnectedDatabase.value = route.query.db
+
+    const { success, data } = await api.getConnection(route.params.connectionId, route.query.db, abortController.signal)
 
     if(success) {
         currentConnection.value = data.details
@@ -110,11 +120,12 @@ function handleCurrentRoute() {
             activeView.value = ConnectionTableStructure
         }
     }
+
+    getConnection()
 }
 
 onBeforeMount(() => {
     handleCurrentRoute()
-    getConnection()
 })
 
 onBeforeUnmount(() => {
