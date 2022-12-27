@@ -12,7 +12,7 @@ async function getConnection(connectionId, database) {
 
     const key = `${connectionId}-${database}`
 
-    if(key in connectionCache === false) {
+    if(key in connectionCache === false || (key in connectionCache && connectionCache[key].connection.type === 'mysql' && connectionCache[key].sql.connection._closing)) {
         const connection = db.getConnection(connectionId, database)
         let sql = null
 
