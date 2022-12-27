@@ -290,7 +290,13 @@ async function getConnectionTable() {
     indexes.value = table.indexes
     foreignKeys.value = table.foreignKeys
 
-    primaryColumn.value = indexes.value.find(index => index.type === 'PRIMARY').column
+    let primaryColumnFound = indexes.value.find(index => index.type === 'PRIMARY')
+
+    if(!primaryColumnFound) {
+        primaryColumnFound = indexes.value.find(index => index.type === 'UNIQUE')
+    }
+
+    primaryColumn.value = primaryColumnFound.column
 
     if(currentConnection.value.type === 'postgresql') {
         const regex = /\((.*)\)/
