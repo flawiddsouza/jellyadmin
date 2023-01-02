@@ -128,14 +128,14 @@
                             <th v-for="rowHeader in rowHeaders" class="column-header">
                                 <a
                                     :href="generateColumnHeaderSortUrl(rowHeader, false)"
-                                    @click.prevent="handleColumnHeaderSortClick(rowHeader, false)"
+                                    @click.prevent="currentPage = 1; handleColumnHeaderSortClick(rowHeader, false)"
                                 >
                                     <span>{{ rowHeader }}</span>
                                 </a>
                                 <span class="column">
                                     <a
                                         :href="generateColumnHeaderSortUrl(rowHeader, true)"
-                                        @click.prevent="handleColumnHeaderSortClick(rowHeader, true)"
+                                        @click.prevent="currentPage = 1; handleColumnHeaderSortClick(rowHeader, true)"
                                         title="descending"
                                         class="no-text-decoration"
                                     >&nbsp;↓</a>
