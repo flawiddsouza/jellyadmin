@@ -182,15 +182,15 @@
         <footer v-show="rows.length > 0">
             <fieldset v-if="totalRows > rows.length">
                 <legend>Page</legend>
-                <template v-for="page in totalPages">
-                    <template v-if="shouldDisplayPage(page)">
+                <template v-for="page in getPages()">
+                    <template v-if="page !== '...'">
                         <template v-if="page === currentPage">
                             <span :class="{ 'ml-0_25': page > 1 }" style="border: 1px solid var(--border-color); padding: 0px 3px;">{{ page }}</span>
                         </template>
                         <a href="#" :class="{ 'ml-0_25': page > 1 }" style="border: 1px solid transparent; padding: 0px 3px;" @click.prevent="changePage(page)" v-else>{{ page }}</a>
                     </template>
                     <template v-else>
-                        <span class="ml-1" v-if="page === 2 || page === totalPages - 1">...</span>
+                        <span class="ml-1">...</span>
                     </template>
                 </template>
             </fieldset>
@@ -786,6 +786,22 @@ function addColumnToSearch(columnName) {
     nextTick(() => {
         querySearchInputRef.value[columnName].focus()
     })
+}
+
+function getPages() {
+    const pages = []
+
+    for(let page=1; page<=totalPages.value; page++) {
+        if(shouldDisplayPage(page)) {
+            pages.push(page)
+        } else {
+            if(page === 2 || page === totalPages.value - 1) {
+                pages.push('...')
+            }
+        }
+    }
+
+    return pages
 }
 
 const vTextareaFitContent =  {
