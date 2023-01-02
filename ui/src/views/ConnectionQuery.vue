@@ -17,7 +17,7 @@
             </thead>
             <tbody>
                 <tr v-for="row in queryRun.rows">
-                    <td v-for="rowHeader in queryRun.rowHeaders">{{ row[rowHeader] }}</td>
+                    <td v-for="rowHeader in queryRun.rowHeaders" class="white-space-pre">{{ row[rowHeader] }}</td>
                 </tr>
             </tbody>
         </table>
