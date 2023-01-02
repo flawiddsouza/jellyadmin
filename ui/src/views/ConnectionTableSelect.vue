@@ -78,7 +78,7 @@
                             <option>NOT IN</option>
                             <option>IS NOT NULL</option>
                         </select>
-                        <input type="search" v-model="querySearchItem.value" @input="handleQuerySearchItemChange(querySearchItemIndex)">
+                        <input type="search" v-model="querySearchItem.value" @input="handleQuerySearchItemChange(querySearchItemIndex)" :ref="el => querySearchInputRef[querySearchItem.column] = el">
                     </div>
                 </div>
             </fieldset>
@@ -139,7 +139,12 @@
                                         title="descending"
                                         class="no-text-decoration"
                                     >&nbsp;↓</a>
-                                    <a href="#" title="Search" class="no-text-decoration">&nbsp;=</a>
+                                    <a
+                                        href="#"
+                                        @click.prevent="addColumnToSearch(rowHeader)"
+                                        title="Search"
+                                        class="no-text-decoration"
+                                    >&nbsp;=</a>
                                 </span>
                             </th>
                         </tr>
@@ -234,7 +239,7 @@
 </template>
 
 <script setup>
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, ref, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from '../store.js'
 import { storeToRefs } from 'pinia'
@@ -269,6 +274,7 @@ const querySearch = ref([
         value: ''
     }
 ])
+const querySearchInputRef = ref({})
 const querySort = ref([
     {
         column: '',
@@ -757,6 +763,22 @@ function generateColumnHeaderSortUrl(columnName, descending) {
 function handleColumnHeaderSortClick(columnName, descending) {
     querySort.value = generateColumnHeaderSortFilter(columnName, descending)
     runQuery()
+}
+
+function addColumnToSearch(columnName) {
+    const columnFound = querySearch.value.find(querySearchItem => querySearchItem.column === columnName)
+
+    if(!columnFound) {
+        querySearch.value.splice(querySearch.value.length - 1, 0, {
+            column: columnName,
+            operator: '=',
+            value: ''
+        })
+    }
+
+    nextTick(() => {
+        querySearchInputRef.value[columnName].focus()
+    })
 }
 
 const vTextareaFitContent =  {
