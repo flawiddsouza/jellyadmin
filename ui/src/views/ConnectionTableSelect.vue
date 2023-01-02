@@ -150,7 +150,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="row in rows" :class="{ 'selected': selectedRowIds.includes(row[primaryColumn].originalText) }">
+                        <tr v-for="row in rows" :class="{ 'selected': selectedRowIds.includes(row[primaryColumn].originalValue) }">
                             <td>
                                 <input type="checkbox" class="vertical-align-middle" :value="row[primaryColumn].originalValue" v-model="selectedRowIds">
                             </td>
