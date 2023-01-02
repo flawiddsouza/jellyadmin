@@ -24,6 +24,10 @@ export async function runQuery(connectionId, database, query) {
     return http.post(`/api/connection/${connectionId}/query?database=${database}`, { query })
 }
 
+export async function getCount(connectionId, database, tableName, hasWhere, query) {
+    return http.post(`/api/connection/${connectionId}/count?database=${database}`, { tableName, hasWhere, query })
+}
+
 export async function updateConnection(connection) {
     const connectionid = connection.id
 

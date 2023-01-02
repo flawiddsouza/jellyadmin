@@ -194,6 +194,39 @@ apiRouter.post('/connection/:connection_id/query', async(req, res) => {
     }
 })
 
+apiRouter.post('/connection/:connection_id/count', async(req, res) => {
+    try {
+        const activeConnection = db.getConnection(req.params.connection_id)
+
+        let count = 0
+
+        // if mysql & no where condition, we use approx count for table with rows > 2,00,000
+        if(activeConnection.type === 'mysql' && req.body.hasWhere === false) {
+            const result = await connection.runQuery(
+                req.params.connection_id,
+                req.query.database,
+                `SHOW TABLE STATUS LIKE '${req.body.tableName}'`
+            )
+
+            if(result[0].Rows > 200000) {
+                count = result[0].Rows
+            } else {
+                const result = await connection.runQuery(req.params.connection_id, req.query.database, req.body.query)
+                count = result[0].count
+            }
+        } else {
+            const result = await connection.runQuery(req.params.connection_id, req.query.database, req.body.query)
+            count = result[0].count
+        }
+
+        res.send({
+            count
+        })
+    } catch(e) {
+        res.status(400).send(e.message)
+    }
+})
+
 app.use('/api', apiRouter)
 
 app.listen(port, () => {

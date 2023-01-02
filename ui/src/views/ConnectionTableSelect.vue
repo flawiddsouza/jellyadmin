@@ -443,8 +443,15 @@ async function runQuery(manual=true) {
             rowHeaders.value = rowHeaders.value.filter(rowHeader => rowHeader !== primaryColumn.value)
         }
 
-        const { data: totalRowsData } = await api.runQuery(route.params.connectionId, route.query.db, generateQuery(true))
-        totalRows.value = totalRowsData[0].count
+        const { data: totalRowsData } = await api.getCount(
+            route.params.connectionId,
+            route.query.db,
+            route.query.table,
+            querySearch.value.some(querySearchItem => querySearchItem.column.trim()),
+            generateQuery(true)
+        )
+
+        totalRows.value = totalRowsData.count
 
         totalPages.value = queryLimit.value > 0 ? Math.ceil(totalRows.value / queryLimit.value) : 1
 
