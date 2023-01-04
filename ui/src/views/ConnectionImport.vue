@@ -34,6 +34,9 @@
 
         <div class="mt-2">
             <button>Import</button>
+            <label class="ml-1">
+                <input type="checkbox" v-model="stopOnError"> Stop on error
+            </label>
         </div>
     </form>
 </template>
@@ -49,6 +52,7 @@ const route = useRoute()
 const fileToImport = ref(null)
 const queriesRun = ref([])
 const fileInput = ref(null)
+const stopOnError = ref(false)
 
 async function importFile() {
     queriesRun.value = []
@@ -87,6 +91,10 @@ async function importFile() {
         }
 
         queriesRun.value.push(queryRun)
+
+        if(stopOnError.value && !success) {
+            return
+        }
     }
 }
 
