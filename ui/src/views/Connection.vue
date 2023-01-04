@@ -14,6 +14,7 @@
                 <aside class="overflow-auto">
                     <div>
                         <router-link :to="`/${route.params.connectionId}?db=${route.query.db}&action=query`" :class="{ active: route.query.db !== undefined && route.query.action === 'query' }">Query</router-link>
+                        <router-link :to="`/${route.params.connectionId}?db=${route.query.db}&action=import`" :class="{ active: route.query.db !== undefined && route.query.action === 'import' }" class="ml-1">Import</router-link>
                     </div>
                     <ul style="list-style: none; margin-left: 0;" class="mt-1">
                         <li v-for="table in tables">
@@ -49,6 +50,7 @@ import { useStore } from '../store'
 import { storeToRefs } from 'pinia'
 import * as api from '../libs/api.js'
 import ConnectionQuery from '../views/ConnectionQuery.vue'
+import ConnectionImport from '../views/ConnectionImport.vue'
 import ConnectionTableSelect from '../views/ConnectionTableSelect.vue'
 import ConnectionTableStructure from '../views/ConnectionTableStructure.vue'
 
@@ -110,6 +112,10 @@ function handleCurrentRoute() {
 
         if(!table && action === 'query') {
             activeView.value = ConnectionQuery
+        }
+
+        if(!table && action === 'import') {
+            activeView.value = ConnectionImport
         }
 
         if(table && action === 'select') {
