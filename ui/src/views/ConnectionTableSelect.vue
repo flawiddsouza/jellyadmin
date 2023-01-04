@@ -169,8 +169,8 @@
                                     <span v-if="row[rowHeader].type === 'null'" class="italic">NULL</span>
                                 </template>
                                 <template v-else>
-                                    <input type="text" :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" @keydown.enter="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'text'">
-                                    <textarea :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'textarea'" v-textarea-fit-content spellcheck="false"></textarea>
+                                    <input type="text" :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" @keydown.enter="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'text'" v-focus>
+                                    <textarea :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'textarea'" v-textarea-fit-content spellcheck="false" v-focus></textarea>
                                 </template>
                             </td>
                         </tr>

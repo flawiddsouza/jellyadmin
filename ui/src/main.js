@@ -11,4 +11,9 @@ import { router } from './router.js'
 createApp(App)
 .use(router)
 .use(createPinia())
+.directive('focus', {
+    mounted(element) {
+        element.focus()
+    }
+})
 .mount('#app')
