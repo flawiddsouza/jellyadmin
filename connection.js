@@ -244,7 +244,7 @@ export async function runQuery(connectionId, database, query) {
         }
 
         if(connection.type === CONNECTION_TYPES.MYSQL) {
-            [ rows ] = await sql.execute(query)
+            [ rows ] = await sql.query(query)
         }
 
         return rows
