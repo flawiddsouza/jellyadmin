@@ -47,6 +47,7 @@ import { useRoute } from 'vue-router'
 import * as api from '../libs/api.js'
 import { fileToString } from '../libs/helpers.js'
 import { highlight } from 'sql-highlight'
+import { emitter } from '../libs/event-bus'
 
 const route = useRoute()
 const fileToImport = ref(null)
@@ -93,9 +94,12 @@ async function importFile() {
         queriesRun.value.push(queryRun)
 
         if(stopOnError.value && !success) {
+            emitter.emit('reloadConnectionTables')
             return
         }
     }
+
+    emitter.emit('reloadConnectionTables')
 }
 
 function highlightSql(sql) {

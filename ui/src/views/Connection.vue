@@ -49,6 +49,7 @@ import { useRoute } from 'vue-router'
 import { useStore } from '../store'
 import { storeToRefs } from 'pinia'
 import * as api from '../libs/api.js'
+import { emitter } from '../libs/event-bus'
 import ConnectionQuery from '../views/ConnectionQuery.vue'
 import ConnectionImport from '../views/ConnectionImport.vue'
 import ConnectionTableSelect from '../views/ConnectionTableSelect.vue'
@@ -130,11 +131,27 @@ function handleCurrentRoute() {
     getConnection()
 }
 
+async function reloadTables() {
+    const { success, data } = await api.getConnection(route.params.connectionId, route.query.db, abortController.signal)
+
+    if(success) {
+        if(data.tables.success) {
+            tables.value = data.tables.data
+        } else {
+            error.value = data.tables.data
+        }
+    } else {
+        error.value = data
+    }
+}
+
 onBeforeMount(() => {
     handleCurrentRoute()
+    emitter.on('reloadConnectionTables', reloadTables)
 })
 
 onBeforeUnmount(() => {
+    emitter.off('reloadConnectionTables', reloadTables)
     abortController.abort()
 })
 
