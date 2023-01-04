@@ -225,8 +225,9 @@
                         <option value="open">open</option>
                         <!-- <option value="gz">gzip</option> -->
                     </select>
-                    <select class="ml-1" v-model="exportType">
+                    <select class="ml-1" style="width: 53px" v-model="exportType">
                         <option value="sql">SQL</option>
+                        <option value="sql+create">SQL + CREATE</option>
                         <option value="csv">CSV,</option>
                         <option value="csv;">CSV;</option>
                         <!-- <option value="tsv">TSV</option> -->
@@ -239,11 +240,12 @@
 </template>
 
 <script setup>
-import { onBeforeMount, ref, nextTick } from 'vue'
+import { onBeforeMount, ref, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from '../store.js'
 import { storeToRefs } from 'pinia'
 import * as api from '../libs/api.js'
+import * as config from '../libs/config.js'
 import { highlight } from 'sql-highlight'
 import { addQueryParamsToRoute } from '../libs/helpers.js'
 import Papa from 'papaparse'
@@ -667,6 +669,11 @@ async function exportSelected() {
     let rowsToExport = []
 
     if(selectAllRows.value || selectedRowIds.value.length === 0) {
+        // warn user if they try to export row count greater than 10,000
+        if(totalRows.value > 10000 && !confirm(`Are you sure you want to export ${new Intl.NumberFormat().format(totalRows.value)}?`)) {
+            return
+        }
+
         const { data } = await api.runQuery(route.params.connectionId, route.query.db, generateQuery(false, true))
         rowsToExport = data
     } else {
@@ -682,9 +689,18 @@ async function exportSelected() {
         })
     }
 
-    if(exportType.value === 'sql') {
+    if(exportType.value.startsWith('sql')) {
+        textToExport = ''
+
+        if(exportType.value === 'sql+create' && currentConnection.value.type === 'mysql') {
+            const createStatement = (
+                await api.runQuery(route.params.connectionId, route.query.db, `SHOW CREATE TABLE ${wrapTableName(route.query.table)}`)
+            ).data[0]['Create Table']
+            textToExport += createStatement + ';\n\n'
+        }
+
         let columnsToExport = columns.value.map(column => wrapColumnName(column.name, currentConnection.value.type)).join(', ')
-        textToExport = `INSERT INTO ${wrapColumnName(route.query.table, currentConnection.value.type)} (${columnsToExport}) VALUES`
+        textToExport += `INSERT INTO ${wrapColumnName(route.query.table, currentConnection.value.type)} (${columnsToExport}) VALUES`
         rowsToExport.forEach((row, rowIndex) => {
             textToExport += '\n('
             textToExport += columns.value.map(column => wrapColumnValue(row[column.name], currentConnection.value.type)).join(',\t')
@@ -811,6 +827,9 @@ const vTextareaFitContent =  {
 }
 
 onBeforeMount(async() => {
+    exportAction.value = config.get('TableSelectView-ExportAction', exportAction.value)
+    exportType.value = config.get('TableSelectView-ExportType', exportType.value)
+
     await getConnectionTable()
 
     if(route.query.filters) {
@@ -840,6 +859,14 @@ onBeforeMount(async() => {
     }
 
     await runQuery(false)
+})
+
+watch(exportAction, () => {
+    config.set('TableSelectView-ExportAction', exportAction.value)
+})
+
+watch(exportType, () => {
+    config.set('TableSelectView-ExportType', exportType.value)
 })
 </script>
 
