@@ -76,14 +76,20 @@
             </tbody>
         </table>
     </template>
+
+    <div class="mt-2">
+        <button @click="dropTable">Drop</button>
+    </div>
 </template>
 
 <script setup>
 import { onBeforeMount, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import * as api from '../libs/api.js'
+import { wrapTableName } from '../libs/sql';
 
 const route = useRoute()
+const router = useRouter()
 const columns = ref([])
 const indexes = ref([])
 const foreignKeys = ref([])
@@ -93,6 +99,23 @@ async function getConnectionTable() {
     columns.value = table.columns
     indexes.value = table.indexes
     foreignKeys.value = table.foreignKeys
+}
+
+async function dropTable() {
+    const dropTableQuery = `DROP TABLE ${wrapTableName(route.query.table)}`
+
+    if(!confirm(dropTableQuery)) {
+        return
+    }
+
+    const { success } = await api.runQuery(route.params.connectionId, route.query.db, dropTableQuery)
+
+    if(!success) {
+        alert('Failed to drop table')
+        return
+    }
+
+    window.document.location.href = `/${route.params.connectionId}?db=${route.query.db}`
 }
 
 onBeforeMount(() => {
