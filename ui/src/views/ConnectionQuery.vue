@@ -9,7 +9,7 @@
 
         <div class="message error mb-2" v-if="queryRun.error">{{ queryRun.error }}</div>
 
-        <table class="mb-2 hover" v-if="queryRun.rows.length > 0">
+        <table class="mb-2 hover sticky" v-if="queryRun.rows.length > 0">
             <thead>
                 <tr>
                     <th v-for="rowHeader in queryRun.rowHeaders">{{ rowHeader }}</th>
