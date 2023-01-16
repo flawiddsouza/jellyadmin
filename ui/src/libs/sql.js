@@ -31,6 +31,10 @@ export function wrapColumnValue(columnValue, type) {
         return columnValue
     }
 
+    if(typeof columnValue === 'boolean') {
+        return columnValue
+    }
+
     if(type === 'mysql') {
         return `'${JSON.stringify(columnValue).slice(1, -1).replace(/'/g, "\\'")}'`
     }
