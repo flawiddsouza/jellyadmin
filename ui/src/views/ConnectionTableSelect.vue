@@ -150,9 +150,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="row in rows" :class="{ 'selected': selectedRowIds.includes(row[primaryColumn].originalValue) }">
+                        <tr v-for="row in rows" :class="{ 'selected': selectedRowIds.includes(row[primaryColumn]?.originalValue) }">
                             <td>
-                                <input type="checkbox" class="vertical-align-middle" :value="row[primaryColumn].originalValue" v-model="selectedRowIds">
+                                <input type="checkbox" class="vertical-align-middle" :value="row[primaryColumn]?.originalValue" v-model="selectedRowIds">
                             </td>
                             <td v-for="rowHeader in rowHeaders" :class="{ 'white-space-pre': row[rowHeader].type === 'text' && row[rowHeader].text.length > 100 }" @click.ctrl="row[rowHeader].edit = true">
                                 <template v-if="!row[rowHeader].edit">
