@@ -212,7 +212,7 @@
                 <div>
                     <button disabled>Edit</button>
                     <button class="ml-1" disabled>Clone</button>
-                    <button class="ml-1" disabled>Delete</button>
+                    <button class="ml-1" :disabled="(selectAllRows ? totalRows : selectedRowIds.length) === 0" @click="deleteRows">Delete</button>
                 </div>
             </fieldset>
             <fieldset>
@@ -851,6 +851,43 @@ function getSelectedRowId(row) {
     }
 
     return JSON.stringify(rowIdentifier)
+}
+
+async function deleteRows() {
+    const rowRows = selectAllRows.value || selectedRowIds.value.length > 1 ? 'rows' : 'row'
+
+    if(!confirm(`Are you sure you want to delete ${selectAllRows.value ? 'all' : selectedRowIds.value.length} ${rowRows}?`)) {
+        return
+    }
+
+    if(selectAllRows.value) {
+        const { success } = await api.runQuery(route.params.connectionId, route.query.db, `DELETE FROM ${wrapTableName(route.query.table, currentConnection.value.type)}`)
+
+        if(!success) {
+            alert('Failed to delete selected rows')
+            return
+        }
+    } else {
+        let generatedWhere = ''
+
+        selectedRowIds.value.forEach((selectedRowId, selectedRowIdIndex) => {
+            generatedWhere += '('
+            const selectedRowIdColumns = JSON.parse(selectedRowId)
+            selectedRowIdColumns.forEach((column, columnIndex) => {
+                generatedWhere += `${columnIndex > 0 ? ' AND ' : ''}${wrapColumnName(column.column, currentConnection.value.type)} = ${wrapColumnValue(column.value, currentConnection.value.type)}`
+            })
+            generatedWhere += `)${selectedRowIdIndex < selectedRowIds.value.length - 1 ? ' OR ' : ''}`
+        })
+
+        const { success } = await api.runQuery(route.params.connectionId, route.query.db, `DELETE FROM ${wrapTableName(route.query.table, currentConnection.value.type)} WHERE ${generatedWhere}`)
+
+        if(!success) {
+            alert('Failed to delete selected rows')
+            return
+        }
+    }
+
+    runQuery()
 }
 
 const vTextareaFitContent =  {
