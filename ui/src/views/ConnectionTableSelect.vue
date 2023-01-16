@@ -748,7 +748,7 @@ async function exportSelected() {
             fileName = `${route.query.table}.csv`
         }
 
-        if(exportType.value === 'sql') {
+        if(exportType.value.startsWith('sql')) {
             blob = new Blob([textToExport], {
                 type: 'application/sql;charset=utf-8;'
             })
