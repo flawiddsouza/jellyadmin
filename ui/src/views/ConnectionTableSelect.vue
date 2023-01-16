@@ -150,9 +150,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="row in rows" :class="{ 'selected': selectedRowIds.includes(row[primaryColumn]?.originalValue) }">
+                        <tr v-for="row in rows" :class="{ 'selected': selectedRowIds.includes(getSelectedRowId(row)) }">
                             <td>
-                                <input type="checkbox" class="vertical-align-middle" :value="row[primaryColumn]?.originalValue" v-model="selectedRowIds">
+                                <input type="checkbox" class="vertical-align-middle" :value="getSelectedRowId(row)" v-model="selectedRowIds">
                             </td>
                             <td v-for="rowHeader in rowHeaders" :class="{ 'white-space-pre': row[rowHeader].type === 'text' && row[rowHeader].text.length > 100 }" @click.ctrl="row[rowHeader].edit = true">
                                 <template v-if="!row[rowHeader].edit">
@@ -606,7 +606,7 @@ async function updateRowColumn(row, column, value) {
 
 function toggleSelectAllRows() {
     if(selectedRowIds.value.length !== rows.value.length) {
-        selectedRowIds.value = rows.value.map(row => row[primaryColumn.value].originalValue)
+        selectedRowIds.value = rows.value.map(row => getSelectedRowId(row))
     } else {
         selectedRowIds.value = []
     }
@@ -678,7 +678,18 @@ async function exportSelected() {
         rowsToExport = data
     } else {
         const { data } = await api.runQuery(route.params.connectionId, route.query.db, generateQuery())
-        rowsToExport = data.filter(row => selectedRowIds.value.includes(row[primaryColumn.value]))
+        rowsToExport = data.filter(row => {
+            return selectedRowIds.value.some(selectedRowId => {
+                let bool = true
+                const selectedRowIdColumns = JSON.parse(selectedRowId)
+                selectedRowIdColumns.forEach(column => {
+                    if(row[column.column] !== column.value) {
+                        bool = false
+                    }
+                })
+                return bool
+            })
+        })
     }
 
     let textToExport = null
@@ -818,6 +829,28 @@ function getPages() {
     }
 
     return pages
+}
+
+function getSelectedRowId(row) {
+    const primaryColumnValue = row[primaryColumn.value]?.originalValue
+
+    let rowIdentifier = []
+
+    if(primaryColumnValue) {
+        rowIdentifier.push({
+            column: primaryColumn.value,
+            value: primaryColumnValue
+        })
+    } else {
+        rowHeaders.value.forEach(rowHeader => {
+            rowIdentifier.push({
+                column: rowHeader,
+                value: row[rowHeader].originalValue
+            })
+        })
+    }
+
+    return JSON.stringify(rowIdentifier)
 }
 
 const vTextareaFitContent =  {
