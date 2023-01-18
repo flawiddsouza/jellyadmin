@@ -69,12 +69,12 @@
                             <option>!=</option>
                             <option>LIKE</option>
                             <option>LIKE %%</option>
-                            <option>REGEXP</option>
+                            <!-- <option>REGEXP</option> -->
                             <option>IN</option>
-                            <option>FIND_IN_SET</option>
+                            <!-- <option>FIND_IN_SET</option> -->
                             <option>IS NULL</option>
                             <option>NOT LIKE</option>
-                            <option>NOT REGEXP</option>
+                            <!-- <option>NOT REGEXP</option> -->
                             <option>NOT IN</option>
                             <option>IS NOT NULL</option>
                         </select>
@@ -364,16 +364,16 @@ function generateQuery(count=false, noLimit=false) {
 
         let value = wrapColumnValue(querySearchItem.value, currentConnection.value.type)
 
-        if(querySearchItem.operator === 'IS NOT NULL') {
+        if(querySearchItem.operator === 'IS NOT NULL' || querySearchItem.operator === 'IS NULL') {
             queryParts.push(`${column} ${querySearchItem.operator}`)
         } else if(querySearchItem.operator === 'LIKE %%') {
             const likeValue = wrapColumnValue(`%${querySearchItem.value}%`, currentConnection.value.type)
             queryParts.push(`${column} LIKE ${likeValue}`)
-        } else if(querySearchItem.operator === 'IN') {
+        } else if(querySearchItem.operator === 'IN' || querySearchItem.operator === 'NOT IN') {
             if(querySearchItem.value.startsWith('(') && querySearchItem.value.endsWith(')')) {
                 value = wrapColumnValue(querySearchItem.value.slice(1, -1), currentConnection.value.type)
             }
-            queryParts.push(`${column} IN (${value})`)
+            queryParts.push(`${column} ${querySearchItem.operator} (${value})`)
         } else {
             queryParts.push(`${column} ${querySearchItem.operator} ${value}`)
         }
