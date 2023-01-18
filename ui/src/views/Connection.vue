@@ -19,6 +19,7 @@
                     <ul style="list-style: none; margin-left: 0;" class="mt-1">
                         <li v-for="table in tables">
                             <router-link
+                                @click="handleTableSelectClick(`/${route.params.connectionId}?db=${route.query.db}&table=${table.table_name}&action=select`)"
                                 :to="`/${route.params.connectionId}?db=${route.query.db}&table=${table.table_name}&action=select`"
                                 style="margin-right: 0.4rem"
                                 :class="{ active: route.query.db !== undefined && route.query.table === table.table_name && route.query.action === 'select' }"
@@ -142,6 +143,12 @@ async function reloadTables() {
         }
     } else {
         error.value = data
+    }
+}
+
+function handleTableSelectClick(clickedRoute) {
+    if(route.fullPath === clickedRoute && clickedRoute !== document.location.pathname + document.location.search) {
+        emitter.emit('forceResetTableSelect')
     }
 }
 

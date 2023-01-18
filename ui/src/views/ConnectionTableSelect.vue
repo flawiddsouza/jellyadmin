@@ -4,6 +4,7 @@
 
         <div>
             <router-link
+                @click="handleTableSelectClick(`/${route.params.connectionId}?db=${route.query.db}&table=${route.query.table}&action=select`)"
                 :to="`/${route.params.connectionId}?db=${route.query.db}&table=${route.query.table}&action=select`"
                 :class="{ active: route.query.db !== undefined && route.query.action === 'select' }"
             >Select data</router-link>
@@ -240,16 +241,17 @@
 </template>
 
 <script setup>
-import { onBeforeMount, ref, nextTick, watch } from 'vue'
+import { onBeforeMount, onBeforeUnmount, ref, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from '../store.js'
 import { storeToRefs } from 'pinia'
 import * as api from '../libs/api.js'
 import * as config from '../libs/config.js'
 import { highlight } from 'sql-highlight'
-import { addQueryParamsToRoute } from '../libs/helpers.js'
+import { addQueryParamsToRoute, removeQueryParamsFromRoute } from '../libs/helpers.js'
 import Papa from 'papaparse'
 import { wrapTableName, wrapColumnName, wrapColumnValue } from '../libs/sql.js'
+import { emitter } from '../libs/event-bus'
 
 const route = useRoute()
 const store = useStore()
@@ -902,6 +904,47 @@ async function deleteRows() {
     runQuery()
 }
 
+function forceReset() {
+    querySelect.value = [
+        {
+            column: ''
+        }
+    ]
+
+    querySearch.value = [
+        {
+            column: '',
+            operator: '=',
+            value: ''
+        }
+    ]
+
+    querySort.value = [
+        {
+            column: '',
+            descending: false
+        }
+    ]
+
+    queryLimit.value = '50'
+
+    currentPage.value = 1
+
+    // we don't specify any query params to remove as the 2nd parameter of this
+    // function because route is never aware of the query params we add using
+    // addQueryParamsToRoute function, so the query params inside it are
+    // exactly what we need here - both "filters" or "page" are absent
+    removeQueryParamsFromRoute(route)
+
+    runQuery(false)
+}
+
+function handleTableSelectClick(clickedRoute) {
+    if(route.fullPath === clickedRoute && clickedRoute !== document.location.pathname + document.location.search) {
+        emitter.emit('forceResetTableSelect')
+    }
+}
+
 const vTextareaFitContent =  {
     mounted(element) {
         element.style.height = element.scrollHeight + 'px'
@@ -941,6 +984,12 @@ onBeforeMount(async() => {
     }
 
     await runQuery(false)
+
+    emitter.on('forceResetTableSelect', forceReset)
+})
+
+onBeforeUnmount(() => {
+    emitter.off('forceResetTableSelect', forceReset)
 })
 
 watch(exportAction, () => {
