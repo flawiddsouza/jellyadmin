@@ -362,9 +362,21 @@ function generateQuery(count=false, noLimit=false) {
 
         const column = wrapColumnName(querySearchItem.column, currentConnection.value.type)
 
-        const value = wrapColumnValue(querySearchItem.value, currentConnection.value.type)
+        let value = wrapColumnValue(querySearchItem.value, currentConnection.value.type)
 
-        queryParts.push(`${column} ${querySearchItem.operator} ${value}`)
+        if(querySearchItem.operator === 'IS NOT NULL') {
+            queryParts.push(`${column} ${querySearchItem.operator}`)
+        } else if(querySearchItem.operator === 'LIKE %%') {
+            const likeValue = wrapColumnValue(`%${querySearchItem.value}%`, currentConnection.value.type)
+            queryParts.push(`${column} LIKE ${likeValue}`)
+        } else if(querySearchItem.operator === 'IN') {
+            if(querySearchItem.value.startsWith('(') && querySearchItem.value.endsWith(')')) {
+                value = wrapColumnValue(querySearchItem.value.slice(1, -1), currentConnection.value.type)
+            }
+            queryParts.push(`${column} IN (${value})`)
+        } else {
+            queryParts.push(`${column} ${querySearchItem.operator} ${value}`)
+        }
     })
 
     const querySortTemp = querySort.value.filter(querySortItem => querySortItem.column.trim())
