@@ -25,8 +25,14 @@
 
     <textarea style="width: 531px; height: 313px; padding: 3px;" v-model="query" spellcheck="false"></textarea>
 
-    <div class="mt-1">
+    <div class="mt-1 flex flex-jc-sb" style="width: 531px;">
         <button @click="runQuery">Run</button>
+        <div>
+            <label>
+                <input type="checkbox" v-model="stopOnError">
+                Stop on error
+            </label>
+        </div>
     </div>
 </template>
 
@@ -39,6 +45,7 @@ import { addQueryParamsToRoute } from '../libs/helpers.js'
 const route = useRoute()
 const query = ref('')
 const queriesRun = ref([])
+const stopOnError = ref(true)
 
 async function runQuery() {
     if(route.query.sql !== query.value) {
@@ -51,9 +58,15 @@ async function runQuery() {
 
     const queriesToRun = query.value.split(';').filter(item => item)
 
-    const result = await Promise.all(queriesToRun.map(queryToRun => {
-        return api.runQuery(route.params.connectionId, route.query.db, queryToRun)
-    }))
+    let result = []
+
+    for(const queryToRun of queriesToRun) {
+        const queryResult = await api.runQuery(route.params.connectionId, route.query.db, queryToRun)
+        result.push(queryResult)
+        if(!queryResult.success && stopOnError.value) {
+            break
+        }
+    }
 
     result.forEach(resultItem => {
         const { success, data } = resultItem
