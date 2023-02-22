@@ -34,6 +34,27 @@
             </label>
         </div>
     </div>
+
+    <div class="mt-1" style="width: 531px;">
+        Query Parameters
+        <table>
+            <tr v-for="(queryParameter, queryParameterIndex) in queryParameters">
+                <td>
+                    <input type="text" placeholder="name" v-model="queryParameter.name">
+                </td>
+                <td>
+                    <input type="text" placeholder="value" v-model="queryParameter.value">
+                </td>
+                <td>
+                    <button @click="queryParameters.splice(queryParameterIndex, 1)">-</button>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align: center; user-select: none;" @click="queryParameters.push({ name: '', value: '' })">+ Add Item</td>
+            </tr>
+        </table>
+        Use :name as variable to substitute with given value in above query.
+    </div>
 </template>
 
 <script setup>
@@ -46,13 +67,15 @@ const route = useRoute()
 const query = ref('')
 const queriesRun = ref([])
 const stopOnError = ref(true)
+const queryParameters = ref([])
 
 async function runQuery() {
-    if(route.query.sql !== query.value) {
-        addQueryParamsToRoute(route, {
-            sql: query.value
-        })
-    }
+    addQueryParamsToRoute(route, {
+        sql: query.value,
+        config: btoa(JSON.stringify({
+            params: queryParameters.value
+        }))
+    })
 
     queriesRun.value = []
 
@@ -61,8 +84,16 @@ async function runQuery() {
     let result = []
 
     for(const queryToRun of queriesToRun) {
-        const queryResult = await api.runQuery(route.params.connectionId, route.query.db, queryToRun)
+        let queryToRunWithQueryParametersSubstituted = queryToRun
+
+        queryParameters.value.forEach(queryParameter => {
+            queryToRunWithQueryParametersSubstituted = queryToRunWithQueryParametersSubstituted.replaceAll(':' + queryParameter.name, queryParameter.value)
+        })
+
+        const queryResult = await api.runQuery(route.params.connectionId, route.query.db, queryToRunWithQueryParametersSubstituted)
+
         result.push(queryResult)
+
         if(!queryResult.success && stopOnError.value) {
             break
         }
@@ -94,7 +125,20 @@ async function runQuery() {
 onBeforeMount(() => {
     if(route.query.sql) {
         query.value = route.query.sql
-        runQuery()
+
+        if(route.query.config) {
+            try {
+                const parsedConfig = JSON.parse(atob(route.query.config))
+
+                if(parsedConfig.params) {
+                    queryParameters.value = parsedConfig.params
+                }
+            } catch {}
+        }
+
+        if(!route.query.run) {
+            runQuery()
+        }
     }
 })
 </script>
