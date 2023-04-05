@@ -21,6 +21,23 @@
                 </tr>
             </tbody>
         </table>
+
+        <form @submit.prevent="exportAsCSV(queryRun)" style="margin-bottom: 1rem;">
+            <fieldset style="margin-top: 0;">
+                <legend>Export <span>({{ queryRun.rows.length }})</span></legend>
+                <div>
+                    <select v-model="exportAction">
+                        <option value="save">save</option>
+                        <option value="open">open</option>
+                    </select>
+                    <select v-model="exportType" class="ml-1" style="width: 53px;">
+                        <option value="csv">CSV,</option>
+                        <option value="csv;">CSV;</option>
+                    </select>
+                    <button class="ml-1">Export</button>
+                </div>
+            </fieldset>
+        </form>
     </template>
 
     <textarea style="width: 531px; height: 313px; padding: 3px;" v-model="query" spellcheck="false"></textarea>
@@ -62,12 +79,15 @@ import { onBeforeMount, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import * as api from '../libs/api.js'
 import { addQueryParamsToRoute } from '../libs/helpers.js'
+import Papa from 'papaparse'
 
 const route = useRoute()
 const query = ref('')
 const queriesRun = ref([])
 const stopOnError = ref(true)
 const queryParameters = ref([])
+const exportAction = ref('open')
+const exportType = ref('csv')
 
 async function runQuery() {
     addQueryParamsToRoute(route, {
@@ -120,6 +140,57 @@ async function runQuery() {
 
         queriesRun.value.push(queryRun)
     })
+}
+
+async function exportAsCSV(queryRun) {
+    let rowsToExport = queryRun.rows.map(item => {
+        Object.keys(item).forEach(key => {
+            if(item[key] instanceof Object) {
+                item[key] = JSON.stringify(item[key], null, 4)
+            }
+        })
+
+        return item
+    })
+
+    let textToExport = Papa.unparse(rowsToExport, {
+        delimiter: exportType.value === 'csv' ? ',' : ';'
+    })
+
+    if(exportAction.value === 'open') {
+        const win = window.open()
+        const pre = win.document.createElement('pre')
+        pre.style.wordBreak = 'break-word'
+        pre.style.whiteSpace = 'pre-wrap'
+        pre.textContent = textToExport
+        win.document.body.appendChild(pre)
+    }
+
+    if(exportAction.value === 'save') {
+        let blob = null
+        let fileName = null
+
+        if(exportType.value.startsWith('csv')) {
+            // BOM support for special characters in Excel
+            const byteOrderMark = '\ufeff'
+
+            blob = new Blob([byteOrderMark, textToExport], {
+                type: 'text/csv;charset=utf-8;'
+            })
+
+            fileName = `query.csv`
+        }
+
+        const link = document.createElement('a')
+
+        link.href = URL.createObjectURL(blob)
+        link.download = fileName
+        link.style.display = 'none'
+        document.body.appendChild(link)
+        link.click()
+
+        document.body.removeChild(link)
+    }
 }
 
 onBeforeMount(() => {
