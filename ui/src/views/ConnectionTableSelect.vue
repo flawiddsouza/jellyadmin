@@ -373,7 +373,9 @@ function generateQuery(count=false, noLimit=false) {
             queryParts.push(`${column} LIKE ${likeValue}`)
         } else if(querySearchItem.operator === 'IN' || querySearchItem.operator === 'NOT IN') {
             if(querySearchItem.value.startsWith('(') && querySearchItem.value.endsWith(')')) {
-                value = wrapColumnValue(querySearchItem.value.slice(1, -1), currentConnection.value.type)
+                value = querySearchItem.value.slice(1, -1).split(',').map(item => wrapColumnValue(item.trim(), currentConnection.value.type)).join(', ')
+            } else {
+                value = querySearchItem.value.split(',').map(item => wrapColumnValue(item.trim(), currentConnection.value.type)).join(', ')
             }
             queryParts.push(`${column} ${querySearchItem.operator} (${value})`)
         } else {
