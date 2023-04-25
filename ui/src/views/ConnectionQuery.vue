@@ -22,7 +22,7 @@
             </tbody>
         </table>
 
-        <form @submit.prevent="exportAsCSV(queryRun)" style="margin-bottom: 1rem;">
+        <form @submit.prevent="exportRows(queryRun)" style="margin-bottom: 1rem;">
             <fieldset style="margin-top: 0;">
                 <legend>Export <span>({{ queryRun.rows.length }})</span></legend>
                 <div>
@@ -33,6 +33,7 @@
                     <select v-model="exportType" class="ml-1" style="width: 53px;">
                         <option value="csv">CSV,</option>
                         <option value="csv;">CSV;</option>
+                        <option value="json">JSON</option>
                     </select>
                     <button class="ml-1">Export</button>
                 </div>
@@ -142,20 +143,32 @@ async function runQuery() {
     })
 }
 
-async function exportAsCSV(queryRun) {
-    let rowsToExport = queryRun.rows.map(item => {
-        Object.keys(item).forEach(key => {
-            if(item[key] instanceof Object) {
-                item[key] = JSON.stringify(item[key], null, 4)
-            }
+async function exportRows(queryRun) {
+    let rowsToExport = queryRun.rows
+
+    if(exportType.value.startsWith('csv')) {
+        rowsToExport = rowsToExport.map(item => {
+            Object.keys(item).forEach(key => {
+                if(item[key] instanceof Object) {
+                    item[key] = JSON.stringify(item[key], null, 4)
+                }
+            })
+
+            return item
         })
+    }
 
-        return item
-    })
+    let textToExport = ''
 
-    let textToExport = Papa.unparse(rowsToExport, {
-        delimiter: exportType.value === 'csv' ? ',' : ';'
-    })
+    if(exportType.value.startsWith('csv')) {
+        textToExport = Papa.unparse(rowsToExport, {
+            delimiter: exportType.value === 'csv' ? ',' : ';'
+        })
+    }
+
+    if(exportType.value === 'json') {
+        textToExport = JSON.stringify(rowsToExport, null, 4)
+    }
 
     if(exportAction.value === 'open') {
         const win = window.open()
@@ -178,7 +191,13 @@ async function exportAsCSV(queryRun) {
                 type: 'text/csv;charset=utf-8;'
             })
 
-            fileName = `query.csv`
+            fileName = `result.csv`
+        } else {
+            blob = new Blob([textToExport], {
+                type: 'application/json;charset=utf-8;'
+            })
+
+            fileName = `result.json`
         }
 
         const link = document.createElement('a')
