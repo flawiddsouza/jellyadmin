@@ -99,7 +99,7 @@ async function runQuery() {
 
     queriesRun.value = []
 
-    const queriesToRun = query.value.split(';').filter(item => item)
+    const queriesToRun = query.value.trim().split(';').filter(item => item)
 
     let result = []
 
