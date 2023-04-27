@@ -53,9 +53,9 @@
         </div>
     </div>
 
-    <div class="mt-1" style="width: 531px;">
-        Query Parameters
-        <table>
+    <div class="mt-2" style="width: 531px; white-space: normal;">
+        <div style="font-size: 1.1em">Query Parameters</div>
+        <table class="mt-0_5">
             <tr v-for="(queryParameter, queryParameterIndex) in queryParameters">
                 <td>
                     <input type="text" placeholder="name" v-model="queryParameter.name">
@@ -71,7 +71,20 @@
                 <td colspan="3" style="text-align: center; user-select: none;" @click="queryParameters.push({ name: '', value: '' })">+ Add Item</td>
             </tr>
         </table>
-        Use :name as variable to substitute with given value in above query.
+        <div class="mt-0_5">Use <code>:name</code> as variable to substitute with given value in above query.</div>
+
+        <div class="mt-2">
+            <div style="font-size: 1.1em">Reusing queries in subsequent queries</div>
+            <div class="mt-0_5">You can reference a query using its order. So if you want to use the 1st query in the 2nd query you can do: <code>SELECT id from ($q1)</code>. Here <code>$q1</code> will be substituted with the 1st query and so on. Same way you can reuse queries in the subsequent queries.</div>
+            <div class="mt-0_5">
+                Example:<br>
+                <code>
+                    SELECT id FROM users WHERE status = 'INACTIVE';<br>
+                    UPDATE users SET status = 'ACTIVE' WHERE id in ($q1);<br>
+                    $q1;
+                </code>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -109,6 +122,10 @@ async function runQuery() {
 
         queryParameters.value.forEach(queryParameter => {
             queryToRunWithQueryParametersSubstituted = queryToRunWithQueryParametersSubstituted.replaceAll(':' + queryParameter.name, queryParameter.value)
+        })
+
+        queriesToRun.forEach((_, queryIndex) => {
+            queryToRunWithQueryParametersSubstituted = queryToRunWithQueryParametersSubstituted.replaceAll(`$q${queryIndex + 1}`, queriesToRun[queryIndex])
         })
 
         const queryResult = await api.runQuery(route.params.connectionId, route.query.db, queryToRunWithQueryParametersSubstituted)
