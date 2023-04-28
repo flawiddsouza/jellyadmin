@@ -44,7 +44,10 @@
     <textarea style="width: 531px; height: 313px; padding: 3px;" v-model="query" spellcheck="false"></textarea>
 
     <div class="mt-1 flex flex-jc-sb" style="width: 531px;">
-        <button @click="runQuery">Run</button>
+        <div>
+            <button @click="runQuery">Run</button>
+            <button @click="formatQuery" class="ml-2">Format</button>
+        </div>
         <div>
             <label>
                 <input type="checkbox" v-model="stopOnError">
@@ -91,11 +94,16 @@
 <script setup>
 import { onBeforeMount, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useStore } from '../store'
+import { storeToRefs } from 'pinia'
 import * as api from '../libs/api.js'
 import { addQueryParamsToRoute } from '../libs/helpers.js'
 import Papa from 'papaparse'
+import { format as sqlFormat } from 'sql-formatter'
 
 const route = useRoute()
+const store = useStore()
+const { currentConnection } = storeToRefs(store)
 const query = ref('')
 const queriesRun = ref([])
 const stopOnError = ref(true)
@@ -157,6 +165,12 @@ async function runQuery() {
         }
 
         queriesRun.value.push(queryRun)
+    })
+}
+
+async function formatQuery() {
+    query.value = sqlFormat(query.value, {
+        language: currentConnection.value.type
     })
 }
 
