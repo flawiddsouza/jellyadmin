@@ -41,7 +41,7 @@
         </form>
     </template>
 
-    <textarea style="width: 531px; height: 313px; padding: 3px;" v-model="query" spellcheck="false"></textarea>
+    <CodeMirrorEditor v-model="query" lang="sql" style="width: 531px; height: 313px; border: 1px solid rgb(204, 204, 204);" />
 
     <div class="mt-1 flex flex-jc-sb" style="width: 531px;">
         <div>
@@ -92,7 +92,7 @@
 </template>
 
 <script setup>
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from '../store'
 import { storeToRefs } from 'pinia'
@@ -100,6 +100,7 @@ import * as api from '../libs/api.js'
 import { addQueryParamsToRoute } from '../libs/helpers.js'
 import Papa from 'papaparse'
 import { format as sqlFormat } from 'sql-formatter'
+import CodeMirrorEditor from '../components/CodeMirrorEditor.vue'
 
 const route = useRoute()
 const store = useStore()
@@ -261,5 +262,19 @@ onBeforeMount(() => {
             runQuery()
         }
     }
+})
+
+function keydownEventHandler(event) {
+    if(event.ctrlKey && event.key === 'Enter') {
+        runQuery()
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('keydown', keydownEventHandler)
+})
+
+onBeforeUnmount(() => {
+    document.removeEventListener('keydown', keydownEventHandler)
 })
 </script>
