@@ -142,11 +142,19 @@ async function runQuery() {
         let match
         let queryResult
 
-        while(match = queryToRunWithQueryParametersSubstituted.match(/\$q\d+/)) {
+        while(match = queryToRunWithQueryParametersSubstituted.match(/\$q(\d+)/)) {
             if(match[0] === `$q${queryIndex + 1}`) {
                 queryResult = {
                     success: false,
                     data: 'Cannot reference same query in itself'
+                }
+                break
+            }
+
+            if(Number(match[1]) > queriesToRun.length) {
+                queryResult = {
+                    success: false,
+                    data: `Cannot reference query ${match[1]} as it does not exist`
                 }
                 break
             }
