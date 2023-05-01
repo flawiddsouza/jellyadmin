@@ -46,7 +46,7 @@
         </form>
     </template>
 
-    <CodeMirrorEditor v-model="query" lang="sql" style="width: 531px; height: 313px; border: 1px solid rgb(204, 204, 204);" />
+    <CodeMirrorEditor v-model="query" lang="sql" style="width: 531px; height: 313px; border: 1px solid rgb(204, 204, 204); font-family: monospace;" />
 
     <div class="mt-1 flex flex-jc-sb" style="width: 531px;">
         <div>
@@ -203,7 +203,8 @@ async function runQuery() {
 
 async function formatQuery() {
     query.value = sqlFormat(query.value, {
-        language: currentConnection.value.type
+        language: currentConnection.value.type,
+        tabWidth: 4,
     })
 }
 
