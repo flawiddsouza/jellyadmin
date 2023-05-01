@@ -2,6 +2,11 @@
     <h2>Query</h2>
 
     <template v-for="queryRun in queriesRun">
+        <div class="mb-2">
+            <code v-html="highlightSql(queryRun.query)" class="white-space-pre"></code>
+            <!-- <router-link :to="getGeneratedQueryEditRoute()" class="ml-2">Edit</router-link> -->
+        </div>
+
         <div class="message success mb-2" v-if="queryRun.queryRan">
             <template v-if="queryRun.rows.length === 0">No rows</template>
             <template v-else>{{ new Intl.NumberFormat().format(queryRun.rows.length) }} {{ queryRun.rows.length > 1 ? 'rows' : 'row' }} returned</template>
@@ -101,6 +106,7 @@ import { addQueryParamsToRoute } from '../libs/helpers.js'
 import Papa from 'papaparse'
 import { format as sqlFormat } from 'sql-formatter'
 import CodeMirrorEditor from '../components/CodeMirrorEditor.vue'
+import { highlight } from 'sql-highlight'
 
 const route = useRoute()
 const store = useStore()
@@ -126,18 +132,35 @@ async function runQuery() {
 
     let result = []
 
-    for(const queryToRun of queriesToRun) {
+    for(const [queryIndex, queryToRun] of queriesToRun.entries()) {
         let queryToRunWithQueryParametersSubstituted = queryToRun
 
         queryParameters.value.forEach(queryParameter => {
             queryToRunWithQueryParametersSubstituted = queryToRunWithQueryParametersSubstituted.replaceAll(':' + queryParameter.name, queryParameter.value)
         })
 
-        queriesToRun.forEach((_, queryIndex) => {
-            queryToRunWithQueryParametersSubstituted = queryToRunWithQueryParametersSubstituted.replaceAll(`$q${queryIndex + 1}`, queriesToRun[queryIndex])
-        })
+        let match
+        let queryResult
 
-        const queryResult = await api.runQuery(route.params.connectionId, route.query.db, queryToRunWithQueryParametersSubstituted)
+        while(match = queryToRunWithQueryParametersSubstituted.match(/\$q\d+/)) {
+            if(match[0] === `$q${queryIndex + 1}`) {
+                queryResult = {
+                    success: false,
+                    data: 'Cannot reference same query in itself'
+                }
+                break
+            }
+
+            queriesToRun.forEach((_, queryIndexToReplace) => {
+                queryToRunWithQueryParametersSubstituted = queryToRunWithQueryParametersSubstituted.replaceAll(`$q${queryIndexToReplace + 1}`, queriesToRun[queryIndexToReplace])
+            })
+        }
+
+        if(!queryResult) {
+            queryResult = await api.runQuery(route.params.connectionId, route.query.db, queryToRunWithQueryParametersSubstituted)
+        }
+
+        queryResult.query = queryToRunWithQueryParametersSubstituted
 
         result.push(queryResult)
 
@@ -147,9 +170,10 @@ async function runQuery() {
     }
 
     result.forEach(resultItem => {
-        const { success, data } = resultItem
+        const { success, data, query } = resultItem
 
         const queryRun = {
+            query,
             rows: [],
             rowHeaders: [],
             error: '',
@@ -277,4 +301,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
     document.removeEventListener('keydown', keydownEventHandler)
 })
+
+function highlightSql(sql) {
+    return highlight(sql, {
+        html: true
+    })
+}
 </script>
