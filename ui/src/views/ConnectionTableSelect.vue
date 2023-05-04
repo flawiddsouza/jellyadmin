@@ -584,7 +584,20 @@ async function updateRowColumn(row, column, value) {
 
     row[column].edit = false
 
-    if(row[column].type === 'text') {
+    if(row[column].type === 'text' || row[column].type === 'null') {
+        // don't unnecessarily update if the value hasn't changed
+        if(row[column].originalText === value) {
+            return
+        }
+
+        const originalRowColumnColumnType = row[column].type
+        const originalRowColumnoriginalText = row[column].originalText
+        const originalRowColumntext = row[column].text
+
+        if(row[column].type === 'null') {
+            row[column].type = 'text'
+        }
+
         row[column]['originalText'] = value
         row[column]['text'] = value.slice(0, 100)
 
@@ -616,6 +629,13 @@ async function updateRowColumn(row, column, value) {
 
         if(!success) {
             error.value = data
+            // on save failure revert to original value
+            // we retain the instant update feel by not updating the data on success
+            // we update it in the ui before the actual save, so it seems instantanious
+            // but revert to original values on failure (this is less jarring as failure is less likely to happen)
+            row[column].type = originalRowColumnColumnType
+            row[column].originalText = originalRowColumnoriginalText
+            row[column].text = originalRowColumntext
         }
     }
 }
