@@ -46,7 +46,7 @@
         </form>
     </template>
 
-    <CodeMirrorEditor v-model="query" lang="sql" style="width: 531px; height: 313px; border: 1px solid rgb(204, 204, 204); font-family: monospace;" />
+    <CodeMirrorEditorSql v-model="query" :database="currentConnection.type" :schema="currentConnection.autoCompletionSchema" style="width: 531px; height: 313px; border: 1px solid rgb(204, 204, 204); font-family: monospace;" v-if="currentConnection" />
 
     <div class="mt-1 flex flex-jc-sb" style="width: 531px;">
         <div>
@@ -105,7 +105,7 @@ import * as api from '../libs/api.js'
 import { addQueryParamsToRoute } from '../libs/helpers.js'
 import Papa from 'papaparse'
 import { format as sqlFormat } from 'sql-formatter'
-import CodeMirrorEditor from '../components/CodeMirrorEditor.vue'
+import CodeMirrorEditorSql from '../components/CodeMirrorEditorSql.vue'
 import { highlight } from 'sql-highlight'
 
 const route = useRoute()

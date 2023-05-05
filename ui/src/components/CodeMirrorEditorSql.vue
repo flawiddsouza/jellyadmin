@@ -5,8 +5,8 @@
 <script>
 import { EditorView, keymap, highlightSpecialChars } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
-import { sql } from '@codemirror/lang-sql'
-import { closeBrackets } from '@codemirror/autocomplete'
+import { MySQL, PostgreSQL, sql } from '@codemirror/lang-sql'
+import { autocompletion, closeBrackets } from '@codemirror/autocomplete'
 import { indentOnInput, indentUnit, bracketMatching, syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
 import { defaultKeymap, indentWithTab, history, historyKeymap } from '@codemirror/commands'
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
@@ -24,13 +24,23 @@ const styleOverrides = EditorView.theme({
  */
 defaultKeymap.find(keyObj => keyObj.key == 'Mod-Enter').run = false
 
-function createState(language, documentText, vueInstance) {
-    let languageFunc = null
-    let highlightStyle = defaultHighlightStyle
+function createState(database, schema, documentText, vueInstance) {
+    let dialect
 
-    if(language === 'sql') {
-        languageFunc = sql()
+    if(database === 'mysql') {
+        dialect = MySQL
     }
+
+    if(database === 'postgresql') {
+        dialect = PostgreSQL
+    }
+
+    const languageFunc = sql({
+        dialect,
+        schema
+    })
+
+    let highlightStyle = defaultHighlightStyle
 
     return EditorState.create({
         doc: documentText,
@@ -39,6 +49,7 @@ function createState(language, documentText, vueInstance) {
             syntaxHighlighting(highlightStyle, { fallback: true }),
             closeBrackets(),
             bracketMatching(),
+            autocompletion(),
             indentOnInput(),
             history(),
             highlightSpecialChars(),
@@ -68,8 +79,12 @@ export default {
             type: String,
             required: true
         },
-        lang: {
+        database: {
             type: String,
+            required: true
+        },
+        schema: {
+            type: Object,
             required: true
         }
     },
@@ -82,7 +97,9 @@ export default {
     watch: {
         modelValue() {
             if(!this.emitted) {
-                this.editor.setState(createState(this.lang, this.modelValue, this))
+                this.editor.dispatch({
+                    changes: { from: 0, to: this.editor.state.doc.length, insert: this.modelValue }
+                })
             } else {
                 this.emitted = false
             }
@@ -97,7 +114,7 @@ export default {
     },
     mounted() {
         this.editor = new EditorView({
-            state: createState(this.lang, this.modelValue, this),
+            state: createState(this.database, this.schema, this.modelValue, this),
             parent: this.$el
         })
     }

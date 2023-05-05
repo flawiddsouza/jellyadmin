@@ -85,6 +85,7 @@ export async function getTables(connectionId, database) {
         const { connection, sql } = await getConnection(connectionId, database)
 
         let rows = []
+        let tableColumns = []
 
         if(connection.type === CONNECTION_TYPES.POSTGRESQL) {
             rows = await sql`
@@ -95,6 +96,13 @@ export async function getTables(connectionId, database) {
                 WHERE
                     table_schema = ${connection.schema}
                 ORDER BY table_name
+            `
+
+            tableColumns = await sql`
+                SELECT table_name, column_name
+                FROM information_schema.columns
+                WHERE table_schema = ${connection.schema}
+                ORDER BY table_name, ordinal_position
             `
         }
 
@@ -107,8 +115,19 @@ export async function getTables(connectionId, database) {
                 WHERE
                     table_schema = '${database}'
                 ORDER BY table_name
+            `);
+
+            [ tableColumns ] = await sql.execute(`
+                SELECT TABLE_NAME as table_name, COLUMN_NAME as column_name
+                FROM information_schema.columns
+                WHERE table_schema = '${database}'
+                ORDER BY TABLE_NAME, ORDINAL_POSITION
             `)
         }
+
+        rows.forEach(row => {
+            row.columns = tableColumns.filter(item => item.table_name === row.table_name).map(item => item.column_name)
+        })
 
         return rows
     } catch(e) {

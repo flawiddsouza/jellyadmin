@@ -84,6 +84,10 @@ async function getConnection() {
 
         if(data.tables.success) {
             tables.value = data.tables.data
+            currentConnection.value.autoCompletionSchema = data.tables.data.reduce((acc, curr) => {
+                acc[curr.table_name] = curr.columns
+                return acc
+            }, {})
         } else {
             error.value = data.tables.data
         }
