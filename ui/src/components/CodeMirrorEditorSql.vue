@@ -86,6 +86,14 @@ export default {
         schema: {
             type: Object,
             required: true
+        },
+        width: {
+            type: String,
+            required: true
+        },
+        height: {
+            type: String,
+            required: true
         }
     },
     data() {
@@ -113,6 +121,9 @@ export default {
         }
     },
     mounted() {
+        this.$el.style.width = this.width
+        this.$el.style.height = this.height
+
         this.editor = new EditorView({
             state: createState(this.database, this.schema, this.modelValue, this),
             parent: this.$el
@@ -121,7 +132,13 @@ export default {
 }
 </script>
 
+
 <style>
+.code-mirror-editor {
+    resize: both;
+    overflow: hidden;
+}
+
 .code-mirror-editor .cm-editor.cm-focused {
     outline: 0 !important;
 }
