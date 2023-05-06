@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { EditorView, keymap, highlightSpecialChars } from '@codemirror/view'
+import { EditorView, keymap, highlightSpecialChars, drawSelection } from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
 import { MySQL, PostgreSQL, sql } from '@codemirror/lang-sql'
 import { autocompletion, closeBrackets } from '@codemirror/autocomplete'
@@ -54,6 +54,13 @@ function createState(database, schema, documentText, vueInstance) {
             history(),
             highlightSpecialChars(),
             highlightSelectionMatches(),
+            // having drawSelection allows you to have the selection highlighting
+            // when you do ctrl-d to select the next match of the selected text
+            // otherwise when ctrl-d selects the next match, you won't see any
+            // selection highlighting
+            // quick trivia: ctrl+d comes from searchKeymap - i thought it came
+            // with the defaultKeymap but guess not
+            drawSelection(),
             indentUnit.of('    '), // 4 spaces
             EditorView.lineWrapping,
             EditorView.updateListener.of(v => {
