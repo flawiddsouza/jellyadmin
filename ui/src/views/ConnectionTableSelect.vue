@@ -306,15 +306,17 @@ async function getConnectionTable() {
         primaryColumnFound = indexes.value.find(index => index.type === 'UNIQUE')
     }
 
-    primaryColumn.value = primaryColumnFound.column
+    if(primaryColumnFound) {
+        primaryColumn.value = primaryColumnFound.column
 
-    if(currentConnection.value.type === 'postgresql') {
-        const regex = /\((.*)\)/
-        const matches = regex.exec(primaryColumn.value)
-        if(matches.length === 2) {
-            primaryColumn.value  = matches[1]
-            if(primaryColumn.value.startsWith('"') && primaryColumn.value.endsWith('"')) {
-                primaryColumn.value = primaryColumn.value.slice(1, -1)
+        if(currentConnection.value.type === 'postgresql') {
+            const regex = /\((.*)\)/
+            const matches = regex.exec(primaryColumn.value)
+            if(matches.length === 2) {
+                primaryColumn.value  = matches[1]
+                if(primaryColumn.value.startsWith('"') && primaryColumn.value.endsWith('"')) {
+                    primaryColumn.value = primaryColumn.value.slice(1, -1)
+                }
             }
         }
     }
