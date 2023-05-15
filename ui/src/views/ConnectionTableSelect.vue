@@ -899,10 +899,10 @@ async function deleteRows() {
     }
 
     if(selectAllRows.value) {
-        const { success } = await api.runQuery(route.params.connectionId, route.query.db, `DELETE FROM ${wrapTableName(route.query.table, currentConnection.value.type)}`)
+        const { success, data } = await api.runQuery(route.params.connectionId, route.query.db, `DELETE FROM ${wrapTableName(route.query.table, currentConnection.value.type)}`)
 
         if(!success) {
-            alert('Failed to delete selected rows')
+            alert(`Failed to delete selected rows: ${data}`)
             return
         }
     } else {
@@ -917,10 +917,10 @@ async function deleteRows() {
             generatedWhere += `)${selectedRowIdIndex < selectedRowIds.value.length - 1 ? ' OR ' : ''}`
         })
 
-        const { success } = await api.runQuery(route.params.connectionId, route.query.db, `DELETE FROM ${wrapTableName(route.query.table, currentConnection.value.type)} WHERE ${generatedWhere}`)
+        const { success, data } = await api.runQuery(route.params.connectionId, route.query.db, `DELETE FROM ${wrapTableName(route.query.table, currentConnection.value.type)} WHERE ${generatedWhere}`)
 
         if(!success) {
-            alert('Failed to delete selected rows')
+            alert(`Failed to delete selected rows: ${data}`)
             return
         }
     }
