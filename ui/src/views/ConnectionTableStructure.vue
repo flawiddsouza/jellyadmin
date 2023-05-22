@@ -34,6 +34,7 @@
             </tr>
         </tbody>
     </table>
+    <button @click="copyCommaSeparatedColumnsToClipboard" style="margin-top: 0.5rem">Copy comma separated columns to clipboard</button>
 
     <template v-if="indexes.length > 0">
         <h3 class="mt-2">Indexes</h3>
@@ -116,6 +117,12 @@ async function dropTable() {
     }
 
     window.document.location.href = `/${route.params.connectionId}?db=${route.query.db}`
+}
+
+function copyCommaSeparatedColumnsToClipboard() {
+    const columnsWithTableName = columns.value.map(column => `${route.query.table}.${column.name}`)
+    navigator.clipboard.writeText(columnsWithTableName.join(', '))
+    alert('Copied to clipboard')
 }
 
 onBeforeMount(() => {
