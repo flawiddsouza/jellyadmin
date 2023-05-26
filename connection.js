@@ -150,7 +150,7 @@ export async function getTableDetails(connectionId, database, tableName) {
                     column_name as name,
                     data_type as type,
                     CASE WHEN is_nullable = 'YES' THEN true ELSE false END as nullable,
-                    column_default as default,
+                    column_default as default_value,
                     false as primary_column,
                     false as auto_increment,
                     pg_catalog.col_description(format('"%s"."%s"', table_schema, table_name)::regclass::oid, ordinal_position) as comment
