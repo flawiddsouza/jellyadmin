@@ -54,10 +54,18 @@
             <button @click="formatQuery" class="ml-2">Format</button>
         </div>
         <div>
-            <label>
-                <input type="checkbox" v-model="stopOnError">
-                Stop on error
-            </label>
+            <div>
+                <label>
+                    <input type="checkbox" v-model="autoRunOnPageLoad">
+                    Auto run on page load / refresh
+                </label>
+            </div>
+            <div>
+                <label>
+                    <input type="checkbox" v-model="stopOnError">
+                    Stop on error
+                </label>
+            </div>
         </div>
     </div>
 
@@ -97,7 +105,7 @@
 </template>
 
 <script setup>
-import { onBeforeMount, ref, onMounted, onBeforeUnmount } from 'vue'
+import { onBeforeMount, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from '../store'
 import { storeToRefs } from 'pinia'
@@ -117,14 +125,26 @@ const stopOnError = ref(true)
 const queryParameters = ref([])
 const exportAction = ref('open')
 const exportType = ref('csv')
+const autoRunOnPageLoad = ref(false)
+
+watch(autoRunOnPageLoad, () => {
+    addQueryParamsToRoute(route, {
+        run: autoRunOnPageLoad.value ? '1' : '0'
+    })
+})
 
 async function runQuery() {
-    addQueryParamsToRoute(route, {
-        sql: query.value,
-        config: btoa(JSON.stringify({
+    const addQueryParams = {
+        sql: query.value
+    }
+
+    if(queryParameters.value.length) {
+        addQueryParams.config = btoa(JSON.stringify({
             params: queryParameters.value
         }))
-    })
+    }
+
+    addQueryParamsToRoute(route, addQueryParams)
 
     queriesRun.value = []
 
@@ -291,7 +311,8 @@ onBeforeMount(() => {
             } catch {}
         }
 
-        if(!route.query.run) {
+        if(route.query.run === '1') {
+            autoRunOnPageLoad.value = route.query.run === '1'
             runQuery()
         }
     }
