@@ -53,7 +53,7 @@
                     <tr>
                         <th>Type</th>
                         <td>
-                            <select class="full-width" required v-model="newConnection.type">
+                            <select class="full-width" required v-model="newConnection.type" @change="handleNewConnectionTypeChange(newConnection)">
                                 <option value="postgresql">PostgreSQL</option>
                                 <option value="mysql">MySQL</option>
                             </select>
@@ -119,6 +119,17 @@ const editConnections = ref({})
 async function getConnections() {
     const { data } = await api.getConnections()
     connections.value = data
+}
+
+function handleNewConnectionTypeChange(newConnection) {
+    if(newConnection.type === 'postgresql') {
+        newConnection.port = 5432
+        newConnection.schema = 'public'
+    }
+
+    if(newConnection.type === 'mysql') {
+        newConnection.port = 3306
+    }
 }
 
 async function addConnection() {
