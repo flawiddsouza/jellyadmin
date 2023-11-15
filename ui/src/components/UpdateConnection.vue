@@ -44,7 +44,7 @@
                 <tr>
                     <th>Database</th>
                     <td>
-                        <input type="text" class="full-width" required v-model="connectionToUpdate.database">
+                        <input type="text" class="full-width" v-model="connectionToUpdate.database">
                     </td>
                 </tr>
                 <tr v-if="connectionToUpdate.type === 'postgresql'">

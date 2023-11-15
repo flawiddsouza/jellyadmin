@@ -41,7 +41,7 @@ const connectionStruct = {
     port: number(),
     username: string(),
     password: string(),
-    database: string(),
+    database: optional(string()),
     schema: optional(string())
 }
 

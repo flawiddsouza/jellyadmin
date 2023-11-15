@@ -3,7 +3,7 @@
         <div class="bold">Available Connections</div>
         <ul class="mt-1">
             <li v-for="(connection, connectionIndex) in connections">
-                <router-link :to="`/${connection.id}?db=${connection.database}`">{{ connection.name }} » {{ connection.database }}</router-link>
+                <router-link :to="getConnectionRoute(connection)">{{ getConnectionName(connection) }}</router-link>
                 <button class="no-border no-padding no-background cursor-pointer vertical-align-middle ml-1" @click="editConnections[connection.id] = !editConnections[connection.id]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-edit" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -86,7 +86,7 @@
                     <tr>
                         <th>Database</th>
                         <td>
-                            <input type="text" class="full-width" required v-model="newConnection.database">
+                            <input type="text" class="full-width" v-model="newConnection.database">
                         </td>
                     </tr>
                     <tr v-if="newConnection.type === 'postgresql'">
@@ -119,6 +119,22 @@ const editConnections = ref({})
 async function getConnections() {
     const { data } = await api.getConnections()
     connections.value = data
+}
+
+function getConnectionRoute(connection) {
+    if(connection.database === '') {
+        return `/${connection.id}`
+    }
+
+    return `/${connection.id}?db=${connection.database}`
+}
+
+function getConnectionName(connection) {
+    if(connection.database === '') {
+        return connection.name
+    }
+
+    return `${connection.name} » ${connection.database}`
 }
 
 function handleNewConnectionTypeChange(newConnection) {
