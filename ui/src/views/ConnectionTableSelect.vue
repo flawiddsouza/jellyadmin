@@ -182,7 +182,7 @@
 
         <footer v-show="rows.length > 0">
             <fieldset v-if="totalRows > rows.length">
-                <legend>Page</legend>
+                <legend><a href="#" @click.prevent="startGotoPage">Page</a></legend>
                 <template v-for="page in getPages()">
                     <template v-if="page !== '...'">
                         <template v-if="page === currentPage">
@@ -967,6 +967,36 @@ function handleTableSelectClick(clickedRoute) {
     if(route.fullPath === clickedRoute && clickedRoute !== document.location.pathname + document.location.search) {
         emitter.emit('forceResetTableSelect')
     }
+}
+
+function startGotoPage() {
+    const page = prompt('Go to page:', currentPage.value)
+
+    if(page === null) {
+        return
+    }
+
+    if(page === '') {
+        return
+    }
+
+    if(isNaN(page)) {
+        alert('Invalid page number')
+        return
+    }
+
+    if(page < 1) {
+        alert('Page number must be greater than 0')
+        return
+    }
+
+    if(page > totalPages.value) {
+        alert(`Page number must be less than or equal to ${totalPages.value}`)
+        return
+    }
+
+    currentPage.value = Number(page)
+    runQuery(true)
 }
 
 const vTextareaFitContent =  {
