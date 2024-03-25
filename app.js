@@ -215,8 +215,22 @@ apiRouter.post('/connection/:connection_id/count', async(req, res) => {
                 count = result[0].count
             }
         } else {
-            const result = await connection.runQuery(req.params.connection_id, req.query.database, req.body.query)
-            count = result[0].count
+            const result = await connection.runQuery(
+                req.params.connection_id,
+                req.query.database,
+                `
+                    SELECT reltuples::bigint AS rows
+                    FROM pg_class
+                    WHERE oid = '${activeConnection.schema}.${req.body.tableName}'::regclass
+                `
+            )
+
+            if(result[0].rows > 200000) {
+                count = result[0].rows
+            } else {
+                const result = await connection.runQuery(req.params.connection_id, req.query.database, req.body.query)
+                count = result[0].count
+            }
         }
 
         res.send({
