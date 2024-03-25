@@ -9,7 +9,7 @@
 
         <div class="message success mb-2" v-if="queryRun.queryRan">
             <template v-if="queryRun.rows.length === 0">No rows</template>
-            <template v-else>{{ new Intl.NumberFormat().format(queryRun.rows.length) }} {{ queryRun.rows.length > 1 ? 'rows' : 'row' }} returned</template>
+            <template v-else>{{ new Intl.NumberFormat().format(queryRun.rows.length) }} {{ queryRun.rows.length > 1 ? 'rows' : 'row' }} returned ({{ queryRun.timeTaken }} seconds)</template>
         </div>
 
         <div class="message error mb-2" v-if="queryRun.error">{{ queryRun.error }}</div>
@@ -185,7 +185,9 @@ async function runQuery() {
         }
 
         if(!queryResult) {
+            let startTime = new Date().getTime()
             queryResult = await api.runQuery(route.params.connectionId, route.query.db, queryToRunWithQueryParametersSubstituted)
+            queryResult.timeTaken = (new Date().getTime() - startTime)/1000
         }
 
         queryResult.query = queryToRunWithQueryParametersSubstituted
@@ -198,20 +200,22 @@ async function runQuery() {
     }
 
     result.forEach(resultItem => {
-        const { success, data, query } = resultItem
+        const { success, data, query, timeTaken } = resultItem
 
         const queryRun = {
             query,
             rows: [],
             rowHeaders: [],
             error: '',
-            queryRan: false
+            queryRan: false,
+            timeTaken: 0,
         }
 
         if(success) {
             queryRun.rows = data
             queryRun.rowHeaders = queryRun.rows.length > 0 ? Object.keys(queryRun.rows[0]) : []
             queryRun.queryRan = true
+            queryRun.timeTaken = timeTaken
         } else {
             queryRun.error = data
             queryRun.queryRan = false
