@@ -50,7 +50,8 @@
 
     <div class="mt-1 flex flex-jc-sb" style="width: 531px;">
         <div>
-            <button @click="runQuery">Run</button>
+            <button @click="runQuery" v-if="!isRunning">Run</button>
+            <button v-else disabled>Running...</button>
             <button @click="formatQuery" class="ml-2">Format</button>
         </div>
         <div>
@@ -126,6 +127,7 @@ const queryParameters = ref([])
 const exportAction = ref('open')
 const exportType = ref('csv')
 const autoRunOnPageLoad = ref(false)
+const isRunning = ref(false)
 
 watch(autoRunOnPageLoad, () => {
     addQueryParamsToRoute(route, {
@@ -151,6 +153,8 @@ async function runQuery() {
     const queriesToRun = query.value.trim().split(';').filter(item => item)
 
     let result = []
+
+    isRunning.value = true
 
     for(const [queryIndex, queryToRun] of queriesToRun.entries()) {
         let queryToRunWithQueryParametersSubstituted = queryToRun
@@ -223,6 +227,8 @@ async function runQuery() {
 
         queriesRun.value.push(queryRun)
     })
+
+    isRunning.value = false
 }
 
 async function formatQuery() {
