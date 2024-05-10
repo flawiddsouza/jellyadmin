@@ -44,3 +44,18 @@ export async function updateConnection(connection) {
 export async function deleteConnection(connectionId) {
     return http.delete(`/api/connection/${connectionId}`)
 }
+
+export async function getSavedQueries(connectionId) {
+    return http.post(`/api/connection/${connectionId}/saved_queries`)
+}
+
+export async function addSavedQuery(connectionId, name, query) {
+    return http.post(`/api/connection/${connectionId}/saved_query`, {
+        name,
+        query,
+    })
+}
+
+export async function deleteSavedQuery(savedQueryId) {
+    return http.delete(`/api/saved_query/${savedQueryId}`)
+}

@@ -31,6 +31,25 @@ export function migrate() {
         return 'Databased initialized'
     }
 
+    if(userVersion === 1) {
+        db.prepare(`
+            CREATE TABLE IF NOT EXISTS "saved_queries" (
+                id INTEGER,
+                connection_id INTEGER,
+                name TEXT,
+                query TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY(id),
+                FOREIGN KEY(connection_id) REFERENCES connections(id)
+            )
+        `).run()
+
+        db.prepare(`PRAGMA user_version = 2`).run()
+
+        return 'saved_queries table created'
+    }
+
     return 'Nothing to migrate'
 }
 
@@ -63,4 +82,21 @@ export function deleteConnection(connectionId) {
         throw new Error('Given connection id does not exist')
     }
     return db.prepare('DELETE FROM connections WHERE id = ?').run(connectionId)
+}
+
+export function getSavedQueries(connectionId) {
+    return db.prepare('SELECT * FROM saved_queries WHERE connection_id = ? ORDER BY created_at DESC').all(connectionId)
+}
+
+export function addSavedQuery(name, query, connectionId) {
+    const result = db.prepare('INSERT INTO saved_queries(name, query, connection_id) VALUES(?, ?, ?)').run(name, query, connectionId)
+    return getSavedQuery(result.lastInsertRowid)
+}
+
+export function getSavedQuery(savedQueryId) {
+    return db.prepare('SELECT * FROM saved_queries WHERE id = ?').get(savedQueryId)
+}
+
+export function deleteSavedQuery(savedQueryId) {
+    return db.prepare('DELETE FROM saved_queries WHERE id = ?').run(savedQueryId)
 }

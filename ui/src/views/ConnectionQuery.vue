@@ -116,6 +116,7 @@ import Papa from 'papaparse'
 import { format as sqlFormat } from 'sql-formatter'
 import CodeMirrorEditorSql from '../components/CodeMirrorEditorSql.vue'
 import { highlight } from 'sql-highlight'
+import { emitter } from '../libs/event-bus'
 
 const route = useRoute()
 const store = useStore()
@@ -335,12 +336,24 @@ function keydownEventHandler(event) {
     }
 }
 
+function emitterLoadQueryHandler(sql) {
+    query.value = sql
+}
+
+function emitterGetCurrentQueryHandler() {
+    emitter.emit('currentQuery', query.value)
+}
+
 onMounted(() => {
     document.addEventListener('keydown', keydownEventHandler)
+    emitter.on('loadQuery', emitterLoadQueryHandler)
+    emitter.on('getCurrentQuery', emitterGetCurrentQueryHandler)
 })
 
 onBeforeUnmount(() => {
     document.removeEventListener('keydown', keydownEventHandler)
+    emitter.off('loadQuery', emitterLoadQueryHandler)
+    emitter.off('getCurrentQuery', emitterGetCurrentQueryHandler)
 })
 
 function highlightSql(sql) {

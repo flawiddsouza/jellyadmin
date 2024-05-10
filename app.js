@@ -243,6 +243,35 @@ apiRouter.post('/connection/:connection_id/count', async(req, res) => {
     }
 })
 
+apiRouter.post('/connection/:connection_id/saved_queries', async(req, res) => {
+    try {
+        const queries = db.getSavedQueries(req.params.connection_id)
+        res.send(queries)
+    } catch(e) {
+        res.status(400).send(e.message)
+    }
+})
+
+apiRouter.post('/connection/:connection_id/saved_query', async(req, res) => {
+    try {
+        const newQuery = db.addSavedQuery(req.body.name, req.body.query, req.params.connection_id)
+        res.status(201).send(newQuery)
+    } catch(e) {
+        res.status(400).send(e.message)
+    }
+})
+
+apiRouter.delete('/saved_query/:saved_query_id', async(req, res) => {
+    try {
+        db.deleteSavedQuery(req.params.saved_query_id)
+        res.send({
+            data: 'Saved Query deleted'
+        })
+    } catch(e) {
+        res.status(400).send(e.message)
+    }
+})
+
 app.use('/api', apiRouter)
 
 app.listen(port, () => {

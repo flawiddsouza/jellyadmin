@@ -1,33 +1,37 @@
 .mt-0_5 {
-    margin-top: 0.25rem;
+    margin-top: var(--0_5);
 }
 
 .mt-1 {
-    margin-top: 0.5rem;
+    margin-top: var(--1);
 }
 
 .mt-2 {
-    margin-top: 1rem;
+    margin-top: var(--2);
 }
 
 .ml-0_25 {
-    margin-left: 0.125rem;
+    margin-left: var(--0_25);
 }
 
 .ml-0_5 {
-    margin-left: 0.25rem;
+    margin-left: var(--0_5);
 }
 
 .ml-1 {
-    margin-left: 0.5rem;
+    margin-left: var(--1);
 }
 
 .ml-2 {
-    margin-left: 1rem;
+    margin-left: var(--2);
 }
 
 .mb-2 {
-    margin-bottom: 1rem;
+    margin-bottom: var(--2);
+}
+
+.mr-2 {
+    margin-right: var(--2);
 }
 
 .full-width {
@@ -72,6 +76,10 @@
 
 .flex-jc-sb {
     justify-content: space-between;
+}
+
+.flex-ai-c {
+    align-items: center;
 }
 
 .grid {
