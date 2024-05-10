@@ -137,7 +137,8 @@ watch(autoRunOnPageLoad, () => {
 
 async function runQuery() {
     const addQueryParams = {
-        sql: query.value
+        sql: query.value,
+        run: autoRunOnPageLoad.value ? '1' : '0',
     }
 
     if(queryParameters.value.length) {
