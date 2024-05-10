@@ -198,7 +198,7 @@ apiRouter.post('/connection/:connection_id/count', async(req, res) => {
     try {
         const activeConnection = db.getConnection(req.params.connection_id)
 
-        let count = 0
+        let count = null
 
         // if mysql & no where condition, we use approx count for table with rows > 2,00,000
         if(activeConnection.type === 'mysql' && req.body.hasWhere === false) {
@@ -210,11 +210,11 @@ apiRouter.post('/connection/:connection_id/count', async(req, res) => {
 
             if(result[0].Rows > 200000) {
                 count = result[0].Rows
-            } else {
-                const result = await connection.runQuery(req.params.connection_id, req.query.database, req.body.query)
-                count = result[0].count
             }
-        } else {
+        }
+
+        // if postgresql & no where condition, we use approx count for table with rows > 2,00,000
+        if(activeConnection.type === 'postgresql' && req.body.hasWhere === false){
             const result = await connection.runQuery(
                 req.params.connection_id,
                 req.query.database,
@@ -227,10 +227,12 @@ apiRouter.post('/connection/:connection_id/count', async(req, res) => {
 
             if(result[0].rows > 200000) {
                 count = result[0].rows
-            } else {
-                const result = await connection.runQuery(req.params.connection_id, req.query.database, req.body.query)
-                count = result[0].count
             }
+        }
+
+        if(count === null) {
+            const result = await connection.runQuery(req.params.connection_id, req.query.database, req.body.query)
+            count = result[0].count
         }
 
         res.send({
