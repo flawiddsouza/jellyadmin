@@ -103,18 +103,16 @@ export default {
             required: true
         }
     },
+    editor: null,
     data() {
         return {
-            editor: null,
             emitted: false
         }
     },
     watch: {
         modelValue() {
             if(!this.emitted) {
-                this.editor.dispatch({
-                    changes: { from: 0, to: this.editor.state.doc.length, insert: this.modelValue }
-                })
+                this.editor.setState(createState(this.database, this.schema, this.modelValue, this))
             } else {
                 this.emitted = false
             }

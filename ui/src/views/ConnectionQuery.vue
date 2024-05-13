@@ -46,7 +46,7 @@
         </form>
     </template>
 
-    <CodeMirrorEditorSql v-model="query" :database="currentConnection.type" :schema="currentConnection.autoCompletionSchema" width="531px" height="313px" style="border: 1px solid rgb(204, 204, 204); font-family: monospace;" v-if="currentConnection" />
+    <CodeMirrorEditorSql v-model="query" :database="currentConnection.type" :schema="currentConnection.autoCompletionSchema" width="531px" height="313px" style="border: 1px solid rgb(204, 204, 204); font-family: monospace;" v-if="currentConnection" :ref="ref => codeMirrorEditor = ref" />
 
     <div class="mt-1 flex flex-jc-sb" style="width: 531px;">
         <div>
@@ -129,6 +129,7 @@ const exportAction = ref('open')
 const exportType = ref('csv')
 const autoRunOnPageLoad = ref(false)
 const isRunning = ref(false)
+const codeMirrorEditor = ref(null)
 
 watch(autoRunOnPageLoad, () => {
     addQueryParamsToRoute(route, {
@@ -337,7 +338,7 @@ function keydownEventHandler(event) {
 }
 
 function emitterLoadQueryHandler(sql) {
-    query.value = sql
+    codeMirrorEditor.value.setValue(sql)
 }
 
 function emitterGetCurrentQueryHandler() {
