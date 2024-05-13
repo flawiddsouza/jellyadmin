@@ -13,7 +13,7 @@ sudo systemctl stop jellyadmin
 sudo systemctl disable jellyadmin
 
 mkdir -p ~/.local/bin/jellyadmin/
-wget https://github.com/flawiddsouza/jellyadmin/releases/download/v0.0.9/jellyadmin-linux.gz -O ~/.local/bin/jellyadmin/jellyadmin-linux.gz
+wget https://github.com/flawiddsouza/jellyadmin/releases/download/v0.1.0/jellyadmin-linux.gz -O ~/.local/bin/jellyadmin/jellyadmin-linux.gz
 gzip -d --force ~/.local/bin/jellyadmin/jellyadmin-linux.gz
 chmod +x ~/.local/bin/jellyadmin/jellyadmin-linux
 
