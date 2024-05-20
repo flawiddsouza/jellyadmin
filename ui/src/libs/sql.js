@@ -40,7 +40,13 @@ export function wrapColumnValue(columnValue, type) {
     }
 
     if(type === 'postgresql') {
-        return `'${JSON.stringify(columnValue).slice(1, -1).replace(/'/g, "''")}'`
+        let value = JSON.stringify(columnValue)
+
+        if(value.startsWith('"') && value.endsWith('"')) {
+            value = value.slice(1, -1)
+        }
+
+        return `'${value.replace(/'/g, "''")}'`
     }
 
     return columnValue
