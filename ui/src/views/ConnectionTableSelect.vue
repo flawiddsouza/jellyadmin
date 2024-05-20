@@ -1,5 +1,5 @@
 <template>
-    <div class="grid full-height" style="grid-template-rows: auto auto auto auto auto 1fr">
+    <div class="grid full-height" :style="`grid-template-rows: auto auto auto auto auto ${error ? 'auto': ''} 1fr`">
         <h2>Select: {{ route.query.table }}</h2>
 
         <div>
@@ -155,7 +155,7 @@
                             <td>
                                 <input type="checkbox" class="vertical-align-middle" :value="getSelectedRowId(row)" v-model="selectedRowIds">
                             </td>
-                            <td v-for="rowHeader in rowHeaders" :class="{ 'white-space-pre': row[rowHeader].type === 'text' && row[rowHeader].text.length > 100 }" @click.ctrl="row[rowHeader].edit = true">
+                            <td v-for="rowHeader in rowHeaders" :class="{ 'white-space-pre': row[rowHeader].type === 'text' && row[rowHeader].text.length > 100 }" @click.ctrl="updateRowColumnValue = row[rowHeader].originalText !== null ? row[rowHeader].originalText : 'null'; row[rowHeader].edit = true">
                                 <template v-if="!row[rowHeader].edit">
                                     <template v-if="row[rowHeader].type === 'text'">
                                         <div class="flex flex-jc-sb">
@@ -170,8 +170,8 @@
                                     <span v-if="row[rowHeader].type === 'null'" class="italic">NULL</span>
                                 </template>
                                 <template v-else>
-                                    <input type="text" :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" @keydown.enter="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'text'" v-focus>
-                                    <textarea :value="row[rowHeader].originalText" class="full-width" @keydown.esc="row[rowHeader].edit = false" @blur="updateRowColumn(row, rowHeader, $event.target.value)" v-if="row[rowHeader].inputType === 'textarea'" v-textarea-fit-content spellcheck="false" v-focus></textarea>
+                                    <input type="text" :value="row[rowHeader].originalText !== null ? row[rowHeader].originalText : 'null'" class="full-width" @input="updateRowColumnValue = $event.target.value" @keydown.esc="row[rowHeader].edit = false" @blur="row[rowHeader].edit = false; updateRowColumn(row, rowHeader);" @keydown.enter="row[rowHeader].edit = false" v-if="row[rowHeader].inputType === 'text'" v-focus>
+                                    <textarea :value="row[rowHeader].originalText !== null ? row[rowHeader].originalText : 'null'" class="full-width"  @input="updateRowColumnValue = $event.target.value" @keydown.esc="row[rowHeader].edit = false" @blur="row[rowHeader].edit = false; updateRowColumn(row, rowHeader);" v-if="row[rowHeader].inputType === 'textarea'" v-textarea-fit-content spellcheck="false" v-focus></textarea>
                                 </template>
                             </td>
                         </tr>
@@ -293,6 +293,7 @@ const currentPage = ref(1)
 const exportAction = ref('save')
 const exportType = ref('sql')
 const hidePrimaryColumnFromTable = ref(false)
+const updateRowColumnValue = ref('')
 
 async function getConnectionTable() {
     const { data: table } = await api.getConnectionTable(route.params.connectionId, route.query.db, route.query.table)
@@ -432,6 +433,49 @@ function generateQuery(count=false, noLimit=false) {
     return queryParts.join(' ')
 }
 
+function generateColumnData(row, column, foreignKeyMap) {
+    let columnData = {}
+
+    if(column.name in foreignKeyMap === false) {
+        const text = typeof row[column.name] === 'string' ? row[column.name] : JSON.stringify(row[column.name], null, 4)
+        columnData = {
+            type: row[column.name] === null ? 'null' : 'text',
+            to: '',
+            text: row[column.name] === null ? row[column.name] : text.slice(0, 100),
+            originalText: row[column.name] === null ? row[column.name] : text,
+            originalValue: row[column.name],
+            inputType: column.type.startsWith('json') ? 'textarea' : 'text',
+            columnType: column.type
+        }
+    } else {
+        const filters = {
+            search: [
+                {
+                    column: foreignKeyMap[column.name].foreign_column,
+                    operator: '=',
+                    value: row[column.name]
+                },
+                {
+                    column: '',
+                    operator: '=',
+                    value: ''
+                }
+            ]
+        }
+        columnData = {
+            type: row[column.name] === null ? 'null' : 'router-link',
+            to: `/${route.params.connectionId}?db=${route.query.db}&table=${foreignKeyMap[column.name].foreign_table}&action=select&filters=${btoa(JSON.stringify(filters))}`,
+            text: row[column.name],
+            originalText: row[column.name],
+            originalValue: row[column.name],
+            inputType: column.type.startsWith('json') ? 'textarea' : 'text',
+            columnType: column.type
+        }
+    }
+
+    return columnData
+}
+
 async function runQuery(manual=true) {
     generatedQuery.value = generateQuery()
 
@@ -486,52 +530,7 @@ async function runQuery(manual=true) {
                     return
                 }
 
-                if(row[column.name] === null) {
-                    row[column.name] = {
-                        type: 'null',
-                        originalText: null,
-                        originalValue: row[column.name],
-                        inputType: column.type.startsWith('json') ? 'textarea' : 'text',
-                        columnType: column.type
-                    }
-                    return
-                }
-
-                if(column.name in foreignKeyMap === false) {
-                    const text = typeof row[column.name] === 'string' ? row[column.name] : JSON.stringify(row[column.name], null, 4)
-                    row[column.name] = {
-                        type: 'text',
-                        text: text.slice(0, 100),
-                        originalText: text,
-                        originalValue: row[column.name],
-                        inputType: column.type.startsWith('json') ? 'textarea' : 'text',
-                        columnType: column.type
-                    }
-                } else {
-                    const filters = {
-                        search: [
-                            {
-                                column: foreignKeyMap[column.name].foreign_column,
-                                operator: '=',
-                                value: row[column.name]
-                            },
-                            {
-                                column: '',
-                                operator: '=',
-                                value: ''
-                            }
-                        ]
-                    }
-                    row[column.name] = {
-                        type: 'router-link',
-                        to: `/${route.params.connectionId}?db=${route.query.db}&table=${foreignKeyMap[column.name].foreign_table}&action=select&filters=${btoa(JSON.stringify(filters))}`,
-                        text: row[column.name],
-                        originalText: row[column.name],
-                        originalValue: row[column.name],
-                        inputType: column.type.startsWith('json') ? 'textarea' : 'text',
-                        columnType: column.type
-                    }
-                }
+                row[column.name] = generateColumnData(row, column, foreignKeyMap)
             })
         })
 
@@ -579,14 +578,10 @@ function handleQuerySortItemChange(querySortItemIndex) {
     }
 }
 
-async function updateRowColumn(row, column, value) {
-    if(row[column].edit === false) {
-        return
-    }
+async function updateRowColumn(row, column) {
+    let value = updateRowColumnValue.value
 
-    row[column].edit = false
-
-    if(row[column].type === 'text' || row[column].type === 'null') {
+    if(row[column].type === 'text' || row[column].type === 'null' || row[column].columnType === 'uuid') {
         // don't unnecessarily update if the value hasn't changed
         if(row[column].originalText === value) {
             return
@@ -596,12 +591,19 @@ async function updateRowColumn(row, column, value) {
         const originalRowColumnoriginalText = row[column].originalText
         const originalRowColumntext = row[column].text
 
-        if(row[column].type === 'null') {
-            row[column].type = 'text'
-        }
+        const foreignKeyMap = foreignKeys.value.reduce((prev, curr) => {
+            prev[curr.column] = curr
+            return prev
+        }, {})
 
-        row[column]['originalText'] = value
-        row[column]['text'] = value.slice(0, 100)
+        const updatedRowColumn = generateColumnData({
+            [column]: value === 'null' ? null : value
+        }, columns.value.find(columnItem => columnItem.name === column), foreignKeyMap)
+
+        row[column].type = updatedRowColumn.type
+        row[column].to = updatedRowColumn.to
+        row[column].text = updatedRowColumn.text
+        row[column].originalText = updatedRowColumn.originalText
 
         const tableName = wrapTableName(route.query.table, currentConnection.value.type)
 
@@ -619,6 +621,9 @@ async function updateRowColumn(row, column, value) {
             if(row[column].columnType === 'jsonb') {
                 valueToUpdate = `'${valueToUpdate.replace(/'/g, "''")}'::jsonb`
             } else {
+                if(valueToUpdate === 'null') {
+                    valueToUpdate = null
+                }
                 valueToUpdate = wrapColumnValue(valueToUpdate, currentConnection.value.type)
             }
         }

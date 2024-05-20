@@ -24,6 +24,10 @@ export function wrapColumnName(columnName, type) {
 
 export function wrapColumnValue(columnValue, type) {
     if(columnValue === null) {
+        if (type === 'postgresql') {
+            return null
+        }
+
         return 'NULL'
     }
 
