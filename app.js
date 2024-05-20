@@ -8,7 +8,9 @@ import { CONNECTION_TYPES } from './constants.js'
 const app = express()
 const port = process.env.PORT ?? 5040
 
-app.use(express.json())
+app.use(express.json({
+    limit: '10mb'
+}))
 app.use(express.static(path.join(path.dirname(process.argv[1]), 'public')))
 
 // URL rewriting for vue router web history mode

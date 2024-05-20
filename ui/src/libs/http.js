@@ -3,7 +3,7 @@ export const http = {
         const response = await fetch(url, {
             signal: abortControllerSignal
         })
-        if(response.status !== 400) {
+        if(response.status < 400) {
             return {
                 success: true,
                 data: await response.json()
@@ -25,7 +25,7 @@ export const http = {
             body: JSON.stringify(body)
         })
 
-        if(response.status !== 400) {
+        if(response.status < 400) {
             return {
                 success: true,
                 data: await response.json()
@@ -47,7 +47,7 @@ export const http = {
             body: JSON.stringify(body)
         })
 
-        if(response.status !== 400) {
+        if(response.status < 400) {
             return {
                 success: true,
                 data: await response.json()
@@ -65,7 +65,7 @@ export const http = {
             method: 'DELETE'
         })
 
-        if(response.status !== 400) {
+        if(response.status < 400) {
             return {
                 success: true,
                 data: await response.json()
