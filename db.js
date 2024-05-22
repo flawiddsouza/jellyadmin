@@ -8,6 +8,8 @@ db.pragma('journal_mode = WAL')
 export function migrate() {
     const userVersion = db.prepare('PRAGMA user_version').pluck().get()
 
+    let migrationMessage = null
+
     if(userVersion === 0) {
         db.prepare(`
             CREATE TABLE IF NOT EXISTS "connections" (
@@ -28,7 +30,7 @@ export function migrate() {
 
         db.prepare(`PRAGMA user_version = 1`).run()
 
-        return 'Databased initialized'
+        migrationMessage = 'Databased initialized'
     }
 
     if(userVersion === 1) {
@@ -47,7 +49,11 @@ export function migrate() {
 
         db.prepare(`PRAGMA user_version = 2`).run()
 
-        return 'saved_queries table created'
+        migrationMessage = 'saved_queries table created'
+    }
+
+    if(migrationMessage !== null) {
+        return migrationMessage
     }
 
     return 'Nothing to migrate'
