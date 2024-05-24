@@ -231,6 +231,8 @@ async function runQuery() {
         queriesRun.value.push(queryRun)
     })
 
+    emitter.emit('reloadConnectionTables')
+
     isRunning.value = false
 }
 
