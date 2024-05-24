@@ -6,7 +6,7 @@
         <div class="message success mt-2 mb-2" v-if="queryRun.queryRan">
             <template v-if="queryRun.isSelectQuery">
                 <template v-if="queryRun.rows.length === 0">No rows</template>
-                <template v-else>{{ new Intl.NumberFormat().format(queryRun.rows.length) }} {{ queryRun.rows.length > 1 ? 'rows' : 'row' }} returned</template>
+                <template v-else>{{ new Intl.NumberFormat().format(queryRun.rows?.length ?? 0) }} {{ queryRun.rows.length === 1 ? 'row' : 'rows' }} returned</template>
             </template>
             <template v-else>
                 {{ queryRun.rowsAffected }} {{ queryRun.rowsAffected.length === 1 ? 'rows' : 'row' }} affected

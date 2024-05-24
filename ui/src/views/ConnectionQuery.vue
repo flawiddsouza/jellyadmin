@@ -9,7 +9,7 @@
 
         <div class="message success mb-2" v-if="queryRun.queryRan">
             <template v-if="queryRun.rows.length === 0">No rows</template>
-            <template v-else>{{ new Intl.NumberFormat().format(queryRun.rows.length) }} {{ queryRun.rows.length > 1 ? 'rows' : 'row' }} returned ({{ queryRun.timeTaken }} seconds)</template>
+            <template v-else>{{ new Intl.NumberFormat().format(queryRun.rows?.length ?? 0) }} {{ queryRun.rows.length === 1 ? 'row' : 'rows' }} returned ({{ queryRun.timeTaken }} seconds)</template>
         </div>
 
         <div class="message error mb-2" v-if="queryRun.error">{{ queryRun.error }}</div>
