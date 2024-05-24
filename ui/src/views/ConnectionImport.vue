@@ -45,7 +45,7 @@
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import * as api from '../libs/api.js'
-import { fileToString } from '../libs/helpers.js'
+import { fileToString, splitQueries } from '../libs/helpers.js'
 import { highlight } from 'sql-highlight'
 import { emitter } from '../libs/event-bus'
 
@@ -58,7 +58,7 @@ const stopOnError = ref(false)
 async function importFile() {
     queriesRun.value = []
 
-    const queriesToRun = (await fileToString(fileToImport.value)).split(';').filter(item => item && item.trim())
+    const queriesToRun = splitQueries(await fileToString(fileToImport.value))
 
     fileToImport.value = null
     fileInput.value.value = ''

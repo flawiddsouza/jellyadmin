@@ -50,3 +50,40 @@ export async function fileToString(file) {
         fileReader.readAsText(file)
     })
 }
+
+export function splitQueries(queryText) {
+    const queryString = queryText.trim()
+
+    if(!queryString) {
+        return []
+    }
+
+    let commaStart = false
+
+    let queries = []
+    let currentQuery = ''
+
+    for(let i = 0; i < queryString.length; i++) {
+        if(queryString[i] === '\'') {
+            commaStart = !commaStart
+        }
+
+        if(queryString[i] === ';' && !commaStart) {
+            currentQuery = currentQuery.trim()
+            if(currentQuery) {
+                queries.push(currentQuery)
+            }
+            currentQuery = ''
+        } else {
+            currentQuery += queryString[i]
+        }
+    }
+
+    currentQuery = currentQuery.trim()
+
+    if(currentQuery) {
+        queries.push(currentQuery)
+    }
+
+    return queries
+}

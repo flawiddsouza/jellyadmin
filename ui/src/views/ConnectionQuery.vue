@@ -111,7 +111,7 @@ import { useRoute } from 'vue-router'
 import { useStore } from '../store'
 import { storeToRefs } from 'pinia'
 import * as api from '../libs/api.js'
-import { addQueryParamsToRoute } from '../libs/helpers.js'
+import { addQueryParamsToRoute, splitQueries } from '../libs/helpers.js'
 import Papa from 'papaparse'
 import { format as sqlFormat } from 'sql-formatter'
 import CodeMirrorEditorSql from '../components/CodeMirrorEditorSql.vue'
@@ -153,7 +153,7 @@ async function runQuery() {
 
     queriesRun.value = []
 
-    const queriesToRun = query.value.trim().split(';').filter(item => item)
+    const queriesToRun = splitQueries(query.value)
 
     let result = []
 
