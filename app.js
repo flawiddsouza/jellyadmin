@@ -1,7 +1,7 @@
 import express from 'express'
 import * as db from './db.js'
 import * as connection from './connection.js'
-import { assert, object, number, string, type, enums, optional } from 'superstruct'
+import { assert, object, number, string, type, enums, optional, nullable } from 'superstruct'
 import path from 'path'
 import { CONNECTION_TYPES } from './constants.js'
 
@@ -43,7 +43,7 @@ const connectionStruct = {
     port: number(),
     username: string(),
     password: string(),
-    database: optional(string()),
+    database: nullable(string()),
     schema: optional(string())
 }
 
