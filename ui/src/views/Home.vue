@@ -122,7 +122,7 @@ async function getConnections() {
 }
 
 function getConnectionRoute(connection) {
-    if(connection.database === '') {
+    if(connection.database === '' || connection.database === null) {
         return `/${connection.id}`
     }
 
@@ -130,7 +130,7 @@ function getConnectionRoute(connection) {
 }
 
 function getConnectionName(connection) {
-    if(connection.database === '') {
+    if(connection.database === '' || connection.database === null) {
         return connection.name
     }
 
