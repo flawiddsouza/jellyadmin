@@ -1,7 +1,15 @@
 <template>
     <template v-if="connectionLoaded">
         <template v-if="showDatabaseList">
-            <div class="bold">Available Databases</div>
+            <form class="flex" @submit.prevent="createDatabase">
+                <div>
+                    <input type="text" v-model="newDatabaseName" required>
+                </div>
+                <div class="ml-1">
+                    <button>Create Database</button>
+                </div>
+            </form>
+            <div class="bold mt-1">Available Databases</div>
             <ul class="mt-1">
                 <li v-for="database in databases">
                     <router-link :to="`/${route.params.connectionId}?db=${database.database}`">{{ database.database }}</router-link>
@@ -55,6 +63,7 @@ import ConnectionQuery from '../views/ConnectionQuery.vue'
 import ConnectionImport from '../views/ConnectionImport.vue'
 import ConnectionTableSelect from '../views/ConnectionTableSelect.vue'
 import ConnectionTableStructure from '../views/ConnectionTableStructure.vue'
+import { wrapDatabaseName } from '../libs/sql.js'
 
 const route = useRoute()
 const store = useStore()
@@ -67,9 +76,10 @@ const abortController = new AbortController()
 const showDatabaseList = ref(false)
 const activeView = ref(null)
 const lastConnectedDatabase = ref(null)
+const newDatabaseName = ref('')
 
-async function getConnection() {
-    if(lastConnectedDatabase.value === route.query.db) {
+async function getConnection(forceFetch = false) {
+    if(lastConnectedDatabase.value === route.query.db && !forceFetch) {
         return
     }
 
@@ -148,6 +158,19 @@ async function reloadTables() {
     } else {
         error.value = data
     }
+}
+
+async function createDatabase() {
+    const { success, data } = await api.runQuery(route.params.connectionId, route.query.db, `CREATE DATABASE ${wrapDatabaseName(newDatabaseName.value, currentConnection.value.type)}`)
+
+    if(!success) {
+        alert(`Failed to create database`)
+        return
+    }
+
+    newDatabaseName.value = ''
+
+    getConnection(true)
 }
 
 function handleTableSelectClick(clickedRoute) {

@@ -1,3 +1,15 @@
+export function wrapDatabaseName(databaseName, type) {
+    if(type === 'mysql') {
+        return `\`${databaseName}\``
+    }
+
+    if(type === 'postgresql') {
+        return `"${databaseName}"`
+    }
+
+    return databaseName
+}
+
 export function wrapTableName(tableName, type) {
     if(type === 'mysql') {
         return `\`${tableName}\``
