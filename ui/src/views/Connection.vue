@@ -13,6 +13,16 @@
             <ul class="mt-1">
                 <li v-for="database in databases">
                     <router-link :to="`/${route.params.connectionId}?db=${database.database}`">{{ database.database }}</router-link>
+                    <button class="no-border no-padding no-background cursor-pointer vertical-align-middle ml-1" @click="dropDatabase(database.database)">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="18" height="18" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                            <line x1="4" y1="7" x2="20" y2="7"></line>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
+                        </svg>
+                    </button>
                 </li>
             </ul>
             <div v-if="databases.length === 0">You haven't added any databases</div>
@@ -171,6 +181,19 @@ async function createDatabase() {
     newDatabaseName.value = ''
 
     getConnection(true)
+}
+
+async function dropDatabase(databaseName) {
+    if(confirm(`Are you sure you want to drop the database ${databaseName}?`)) {
+        const { success, data } = await api.runQuery(route.params.connectionId, route.query.db, `DROP DATABASE ${wrapDatabaseName(databaseName, currentConnection.value.type)}`)
+
+        if(!success) {
+            alert(`Failed to drop database: ${data}`)
+            return
+        }
+
+        getConnection(true)
+    }
 }
 
 function handleTableSelectClick(clickedRoute) {
