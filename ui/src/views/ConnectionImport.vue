@@ -33,10 +33,7 @@
         <input type="file" required accept=".sql" @change="fileToImport = $event.target.files[0]" :ref="el => fileInput = el">
 
         <div class="mt-2">
-            <button>Import</button>
-            <label class="ml-1">
-                <input type="checkbox" v-model="stopOnError"> Stop on error
-            </label>
+            <button :disabled="isImporting">{{ isImporting ? 'Importing...' : 'Import' }}</button>
         </div>
     </form>
 </template>
@@ -53,51 +50,41 @@ const route = useRoute()
 const fileToImport = ref(null)
 const queriesRun = ref([])
 const fileInput = ref(null)
-const stopOnError = ref(false)
+const isImporting = ref(false)
 
 async function importFile() {
+    isImporting.value = true
     queriesRun.value = []
 
-    const queriesToRun = splitQueries(await fileToString(fileToImport.value))
+    const file = fileToImport.value
+
+    const { success, message } = await api.importFile(route.params.connectionId, route.query.db, file)
+
+    if (success) {
+        queriesRun.value.push({
+            query: '',
+            rows: [],
+            rowHeaders: [],
+            isSelectQuery: false,
+            rowsAffected: 0,
+            error: '',
+            queryRan: true
+        })
+    } else {
+        queriesRun.value.push({
+            query: '',
+            rows: [],
+            rowHeaders: [],
+            isSelectQuery: false,
+            rowsAffected: 0,
+            error: message,
+            queryRan: false
+        })
+    }
 
     fileToImport.value = null
     fileInput.value.value = ''
-
-    for(const queryToRun of queriesToRun) {
-        const { success, data } = await api.runQuery(route.params.connectionId, route.query.db, queryToRun)
-
-        const queryRun = {
-            query: queryToRun,
-            rows: [],
-            rowHeaders: [],
-            rows: {},
-            isSelectQuery: true,
-            rowsAffected: 0,
-            error: '',
-            queryRan: false
-        }
-
-        if(success) {
-            if(Array.isArray(data)) {
-                queryRun.rows = data
-                queryRun.rowHeaders = queryRun.rows.length > 0 ? Object.keys(queryRun.rows[0]) : []
-            } else {
-                queryRun.rowsAffected = data.affectedRows
-                queryRun.isSelectQuery = false
-            }
-            queryRun.queryRan = true
-        } else {
-            queryRun.error = data
-            queryRun.queryRan = false
-        }
-
-        queriesRun.value.push(queryRun)
-
-        if(stopOnError.value && !success) {
-            emitter.emit('reloadConnectionTables')
-            return
-        }
-    }
+    isImporting.value = false
 
     emitter.emit('reloadConnectionTables')
 }

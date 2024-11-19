@@ -59,3 +59,11 @@ export async function addSavedQuery(connectionId, name, query) {
 export async function deleteSavedQuery(savedQueryId) {
     return http.delete(`/api/saved_query/${savedQueryId}`)
 }
+
+export async function importFile(connectionId, database, file) {
+    const formData = new FormData()
+    formData.append('database', database)
+    formData.append('file', file)
+
+    return http.postMultipart(`/api/connection/${connectionId}/import`, formData)
+}

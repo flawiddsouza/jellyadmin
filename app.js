@@ -4,6 +4,9 @@ import * as connection from './connection.js'
 import { assert, object, number, string, type, enums, optional, nullable } from 'superstruct'
 import path from 'path'
 import { CONNECTION_TYPES } from './constants.js'
+import { exec } from 'child_process'
+import multer from 'multer'
+import fs from 'fs'
 
 const app = express()
 const port = process.env.PORT ?? 5040
@@ -270,6 +273,36 @@ apiRouter.delete('/saved_query/:saved_query_id', async(req, res) => {
             data: 'Saved Query deleted'
         })
     } catch(e) {
+        res.status(400).send(e.message)
+    }
+})
+
+const upload = multer({ dest: 'uploads/' })
+
+apiRouter.post('/connection/:connection_id/import', upload.single('file'), async (req, res) => {
+    try {
+        const { connection_id } = req.params
+        const { database } = req.body
+        const filePath = req.file.path
+
+        const connection = db.getConnection(connection_id, database)
+
+        const command = `mysql --protocol=TCP -h ${connection.host} -P ${connection.port} -u ${connection.username} -p${connection.password} "${database}" < ${filePath}`
+
+        console.log('import', { command })
+
+        exec(command, (error, stdout, stderr) => {
+            fs.unlinkSync(filePath)
+
+            if (error) {
+                res.status(500).send({ success: false, message: stderr })
+                return
+            }
+
+            res.send({ success: true, message: 'Import completed successfully' })
+        })
+    } catch (e) {
+        console.error(e)
         res.status(400).send(e.message)
     }
 })

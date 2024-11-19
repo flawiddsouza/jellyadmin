@@ -76,5 +76,24 @@ export const http = {
                 data: await response.text()
             }
         }
+    },
+
+    async postMultipart(url, formData) {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData
+        })
+
+        if(response.status < 400) {
+            return {
+                success: true,
+                data: await response.json()
+            }
+        } else {
+            return {
+                success: false,
+                data: await response.text()
+            }
+        }
     }
 }
