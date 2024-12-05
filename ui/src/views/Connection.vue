@@ -33,6 +33,7 @@
                     <div>
                         <router-link :to="`/${route.params.connectionId}?db=${route.query.db}&action=query`" :class="{ active: route.query.db !== undefined && route.query.action === 'query' }">Query</router-link>
                         <router-link :to="`/${route.params.connectionId}?db=${route.query.db}&action=import`" :class="{ active: route.query.db !== undefined && route.query.action === 'import' }" class="ml-1">Import</router-link>
+                        <a href="#" @click.prevent="dropAllTables(route.query.db)" class="ml-1">Drop All Tables</a>
                     </div>
                     <ul style="list-style: none; margin-left: 0;" class="mt-1">
                         <li v-for="table in tables">
@@ -194,6 +195,27 @@ async function dropDatabase(databaseName) {
 
         getConnection(true)
     }
+}
+
+async function dropAllTables(databaseName) {
+    if (tables.value.length === 0) {
+        alert('No tables found to drop.')
+        return
+    }
+
+    const userInput = prompt(`Are you sure you want to drop all tables in ${databaseName}? Type 'yes' to confirm.`)
+    if (userInput !== 'yes') {
+        return
+    }
+
+    const { success, data } = await api.runQuery(route.params.connectionId, databaseName, `DROP TABLE ${tables.value.map(table => wrapDatabaseName(table.table_name, currentConnection.value.type)).join(', ')}`)
+
+    if (!success) {
+        alert(`Failed to drop all tables: ${data}`)
+        return
+    }
+
+    reloadTables()
 }
 
 function handleTableSelectClick(clickedRoute) {
